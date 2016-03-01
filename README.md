@@ -11,35 +11,35 @@ Currently, you can do nothing. :(
 
 Create a project, add/remove files, install/restore NuGet package.
 
-```dnproj new ConsoleApplication1 -t csharp```
+``` dnproj new ConsoleApplication1 -t csharp ```
 
-```dnproj add SomeClass.cs```
+``` dnproj add SomeClass.cs ```
 
-```dnproj remove SomeClass.cs```
+``` dnproj remove SomeClass.cs ```
 
-```dnproj install SomePackage```
+``` dnproj install SomePackage ```
 
-```dnproj restore```
+``` dnproj restore ```
 
-```dnproj edit```
+``` dnproj edit ```
 
 then...
 
-```xbuild```
+``` xbuild ```
 
 # dnsln
 
 Create a solution, add/remove projects, add/remove solution items.
 
-```dnsln new ConsoleApplication1.sln```
+``` dnsln new ConsoleApplication1.sln ```
 
-```dnsln add-proj ConsoleApplication1.csproj```
+``` dnsln add-proj ConsoleApplication1.csproj ```
 
-```dnsln add SomeSolutionItem.txt```
+``` dnsln add SomeSolutionItem.txt ```
 
 then...
 
-```xbuild```
+``` xbuild ```
 
 # LICENSE
 
