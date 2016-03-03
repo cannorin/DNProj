@@ -30,6 +30,8 @@ namespace DNProj
 {
     public static class Templates
     {
+        public static string[] HelpOptions { get; } = new []{"help", "--help", "-h", "-?"};
+
         public static string AssemblyInfo { get; } = "AssemblyInfo.cs";
 
         public static string AssemblyInfoFSharp { get; } = "AssemblyInfo.fs";

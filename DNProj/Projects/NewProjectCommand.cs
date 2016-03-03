@@ -38,35 +38,21 @@ namespace DNProj
         string arch = "AnyCPU";
 
         public NewProjectCommand()
-            : base()
+            : base("dnproj new", 
+                   "create new project.\n\nexample:\n  $ dnproj new ConsoleApplication1.csproj -d ConsoleApplication1 -t csharp", 
+                   "create new project.", "<filename>", "[options]")
         {
-            Commands["this"] = CreateProj;
             Options.Add("d=|output-dir=", "specify output directory. \n[default=<current directory>]", x => outputdir = x);
             Options.Add("t=|template=", "specify language template. \n(none|csharp|fsharp) [default=none]", x => temp = x);
             Options.Add("o=|output-type=", "specify output type. \n(library|exe|winexe|module) [default=exe]", x => type = x);
             Options.Add("p=|platform=", "specify platform target. \n(AnyCPU|x86|x64) [default=AnyCPU]", x => arch = x);
         }
 
-        public override void Help(IEnumerable<string> _)
+        public override void Run(IEnumerable<string> args)
         {
-            Console.WriteLine(
-                @"usage: dnproj new <name> [options]
-                
-creates new project.
-type 'dnproj new help' to show this.
-
-example:
-      $ dnproj new ConsoleApplication1.csproj -d ConsoleApplication1 -t csharp
-
-options:");
-            Options.WriteOptionDescriptions(Console.Out);
-        }
-
-        public void CreateProj(IEnumerable<string> args)
-        {
-            if (args.Count() < 1)
+            if (args.Count() < 1 || args.Any(Templates.HelpOptions.Contains))
             {
-                Console.WriteLine("error: specify filename.");
+                Help(args);
                 return;
             }
             if (!(temp == "csharp" || temp == "fsharp" || temp == "none"))

@@ -24,26 +24,65 @@ using System.Linq;
 using System.Threading;
 using Mono.Options;
 using NX;
+using DNProj;
 
 namespace DNProj
 {
     public abstract class Command
     {
-        public Dictionary<string, Action<IEnumerable<string>>> Commands;
+        public Dictionary<string, Command> Commands;
         public OptionSet Options;
 
-        public Command()
+        public string Name { get; set; }
+
+        public string Description { get; set; }
+
+        public string ShortDescription { get; set; }
+
+        public string[] Args { get; set; }
+
+        public Command(string name, string desc, string shortdesc, params string[] args)
         {
             Options = new OptionSet();
-            Commands = new Dictionary<string, Action<IEnumerable<string>>>();
-            Commands["help"] = Help;
-            Commands["--help"] = Help;
-            Commands["-h"] = Help;
+            Commands = new Dictionary<string, Command>();
+            Name = name;
+            Description = desc;
+            ShortDescription = shortdesc;
+            Args = args;
         }
 
-        public abstract void Help(IEnumerable<string> args);
+        public virtual void Help(IEnumerable<string> args)
+        {
+            Console.WriteLine(@"usage: {0} {1}
 
-        public void Run(IEnumerable<string> args)
+{2}", Name, string.Join(" ", Args), Description);
+            if (Commands.Any())
+            {
+                Console.WriteLine("\ncommands:");
+                foreach (var c in Commands.Values)
+                {
+                    var diff = c.Name.Split(' ').Except(Name.Split(' ')).First();
+                    var s = diff + " " + string.Join(" ", c.Args);
+                    Console.Write("  {0}", s);
+                    if (27 - s.Length <= 0)
+                    {
+                        Console.WriteLine();
+                        IENX.Repeat(" ", 33).Iter(Console.Write);
+                    }
+                    else
+                    {
+                        IENX.Repeat(" ", 27 - s.Length).Iter(Console.Write);
+                    }
+                    Console.WriteLine(c.ShortDescription);
+                }
+                Console.WriteLine("  help                       show this.");
+            }
+            Console.WriteLine("\noptions:");
+            Options.WriteOptionDescriptions(Console.Out);
+            Console.WriteLine("  -h, -?, --help             show this.");
+        }
+
+        public virtual void Run(IEnumerable<string> args)
         {
             var rs = Options.Parse(args);
             if (rs.Count == 0)
@@ -53,15 +92,44 @@ namespace DNProj
                 var c = rs.Hd();
 
                 if (Commands.ContainsKey(c))
-                    Commands[c](rs.Skip(1));
+                    Commands[c].Run(rs.Skip(1));
+                else if (Templates.HelpOptions.Contains(c))
+                {
+                    Help(rs);
+                }
                 else if (Commands.ContainsKey("this"))
-                    Commands["this"](rs);
+                {
+                    Commands["this"].Run(rs);
+                }
                 else
                 {
                     Console.WriteLine("command {0} not found.", c);
                     Help(rs);
                 }
             }
+        }
+    }
+
+    public class SimpleCommand : Command
+    {
+        Action<IEnumerable<string>> a;
+
+        public SimpleCommand(Action<IEnumerable<string>> f, string name, string desc, params string[] args)
+            : base(name, desc, desc, args)
+        {
+            a = f;
+        }
+
+        public override void Run(IEnumerable<string> args)
+        {
+            a(args);
+        }
+
+        public override void Help(IEnumerable<string> args)
+        {
+            Console.WriteLine(@"usage: {0} {1}
+
+{2}", Name, string.Join(" ", Args), Description);
         }
     }
 }

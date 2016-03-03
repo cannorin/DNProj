@@ -34,32 +34,9 @@ namespace DNProj
         string projName;
 
         public SolutionCommand()
-            : base()
+            : base("dnsln", "not implemented.", "")
         {
-            Options.Add("i=|input=", "specify solution file, not in the current directory.", p => projName = p);
-            Commands["new"] = new NewProjectCommand().Run;
-        }
-
-        public override void Help(IEnumerable<string> _)
-        {
-            Console.WriteLine(
-                @"usage: dnsln <command> [options]
-                
-operates the .*sln file in the current directory.
-if no .*sln files are found, it fails.
-
-commands: 
-      new <filename>         create a new solution. type 'dnsln new help' to show help.
-      new-proj <filename>    create a new project, then add it to this solution.
-      add <filename>         add file to this solution.
-      add-proj <filename>    add project to this solution.
-      remove <filename>      remove file from this solution.
-      remove-proj <filename> remove project from this solution.
-      edit                   edit solution tree with $EDITOR.
-      help                   show this.
-
-options:");
-            Options.WriteOptionDescriptions(Console.Out);
+            // Options.Add("i=|input=", "specify solution file, not in the current directory.", p => projName = p);
         }
 
         public Option<Project> Solution

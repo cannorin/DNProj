@@ -34,48 +34,23 @@ namespace DNProj
         string projName;
 
         public ProjectCommand()
-            : base()
+            : base("dnproj", "operate the .*proj file in the current directory.\nif no .*proj files are found, it fails.", "", "<command>", "[options]")
         {
             Options.Add("i=|input=", "specify project file, not in the current directory.", p => projName = p);
-            Commands["new"] = new NewProjectCommand().Run;
+            Commands["new"] = new NewProjectCommand();
         }
 
-        public override void Help(IEnumerable<string> _)
+        public Option<Project> GetProject()
         {
-            Console.WriteLine(
-                @"usage: dnproj <command> [options]
-                
-operates the .*proj file in the current directory.
-if no .*proj files are found, it fails.
-
-commands: 
-      new <filename>         create a new project. type 'dnproj new help' to show help.
-      add <filename>         add file to this project.
-      remove <filename>      remove file from this project.
-      edit                   edit project tree with $EDITOR.
-      help                   show this.
-
-options:");
-            Options.WriteOptionDescriptions(Console.Out);
+            return Environment.CurrentDirectory
+                .Try(x => projName ?? Directory.GetFiles(x).Find(f => f.EndsWith("proj")))
+                .Map(x =>
+                {
+                    var p = new Project();
+                    p.Load(x);
+                    return p;
+                });
         }
-
-        public Option<Project> Project
-        {
-            get
-            {
-                return Environment.CurrentDirectory
-                    .Try(x => Directory.GetFiles(x).Find(f => f.EndsWith("proj")))
-                    .Match(x => x, () => projName)
-                    .Try(x =>
-                    {
-                        var p = new Project();
-                        p.Load(x);
-                        return p;
-                    });
-            }
-        }
-
-
     }
 }
 
