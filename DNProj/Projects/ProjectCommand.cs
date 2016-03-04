@@ -31,25 +31,11 @@ namespace DNProj
 {
     public class ProjectCommand : Command
     {
-        string projName;
-
         public ProjectCommand()
-            : base("dnproj", "operate the .*proj file in the current directory.\nif no .*proj files are found, it fails.", "", "<command>", "[options]")
+            : base("dnproj", "operate the .*proj file in the current directory.", "", "<command>", "[options]")
         {
-            Options.Add("i=|input=", "specify project file, not in the current directory.", p => projName = p);
             Commands["new"] = new NewProjectCommand();
-        }
-
-        public Option<Project> GetProject()
-        {
-            return Environment.CurrentDirectory
-                .Try(x => projName ?? Directory.GetFiles(x).Find(f => f.EndsWith("proj")))
-                .Map(x =>
-                {
-                    var p = new Project();
-                    p.Load(x);
-                    return p;
-                });
+            Commands["add"] = new AddProjectCommand();
         }
     }
 }

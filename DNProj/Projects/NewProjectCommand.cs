@@ -26,7 +26,6 @@ using NX;
 using System.Diagnostics;
 using Mono.Options;
 using Microsoft.Build.BuildEngine;
-using System.CodeDom;
 
 namespace DNProj
 {
@@ -50,6 +49,7 @@ namespace DNProj
 
         public override void Run(IEnumerable<string> args)
         {
+            args = Options.Parse(args);
             if (args.Count() < 1 || args.Any(Templates.HelpOptions.Contains))
             {
                 Help(args);

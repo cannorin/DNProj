@@ -82,6 +82,10 @@ namespace DNProj
             Console.WriteLine("  -h, -?, --help             show this.");
         }
 
+        /// <summary>
+        /// If you override this, do not forget to do <code>Options.Parse(args);</code>
+        /// </summary>
+        /// <param name="args">Arguments.</param>
         public virtual void Run(IEnumerable<string> args)
         {
             var rs = Options.Parse(args);

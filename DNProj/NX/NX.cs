@@ -46,6 +46,14 @@ namespace NX
         }
     }
 
+    public static class ExprNX
+    {
+        public static T Block<T>(Func<T> f)
+        {
+            return f();
+        }
+    }
+
     public static class IENX
     {
         public static IEnumerable<string> EnumerateLines(this StreamReader sr)
@@ -638,9 +646,19 @@ namespace NX
             return a.HasValue ? a.Value : b;
         }
 
+        public static T DefaultLazy<T>(this Option<T> a, Func<T> b)
+        {
+            return a.HasValue ? a.Value : b();
+        }
+
         public static T2 MapDefault<T, T2>(this Option<T> a, Func<T, T2> f, T2 b)
         {
             return a.HasValue ? f(a.Value) : b;
+        }
+
+        public static T2 MapDefaultLazy<T, T2>(this Option<T> a, Func<T, T2> f, Func<T2> b)
+        {
+            return a.HasValue ? f(a.Value) : b();
         }
 
         public static TR Match<T, TR>(this Option<T> a, Func<T, TR> Some, Func<TR> None)
