@@ -26,18 +26,13 @@ using NX;
 using System.Diagnostics;
 using Mono.Options;
 using Microsoft.Build.BuildEngine;
-using System.CodeDom.Compiler;
 
 namespace DNProj
 {
-    public class ProjectCommand : Command
+    public class ConfProjectCommand
     {
-        public ProjectCommand()
-            : base("dnproj", "operate the .*proj file in the current directory.", "", "<command>", "[options]")
+        public ConfProjectCommand()
         {
-            Commands["new"] = new NewProjectCommand();
-            Commands["add"] = new AddProjectCommand();
-            Commands["ls"] = new ListProjectCommand();
         }
     }
 }

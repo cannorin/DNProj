@@ -656,11 +656,6 @@ namespace NX
             return a.HasValue ? f(a.Value) : b;
         }
 
-        public static T2 MapDefaultLazy<T, T2>(this Option<T> a, Func<T, T2> f, Func<T2> b)
-        {
-            return a.HasValue ? f(a.Value) : b();
-        }
-
         public static TR Match<T, TR>(this Option<T> a, Func<T, TR> Some, Func<TR> None)
         {
             return a.HasValue ? Some(a.Value) : None();
@@ -694,7 +689,11 @@ namespace NX
 
         public static Option<TR> Try<T, TR>(this Option<T> t, Func<T, TR> f)
         {
-            return !t.HasValue ? new Option<TR>(new NullReferenceException("This is None<" + typeof(T).Name + ">")) : Try(() => f(t.Value));
+            return !t.HasValue ?
+                t.HasException ?
+                    new Option<TR>(t.InnerException) :
+                    new Option<TR>(new NullReferenceException("This is None<" + typeof(T).Name + ">"))
+            : Try(() => f(t.Value));
         }
 
         public static Option<T> Try<T>(this Func<T> f)
@@ -716,7 +715,11 @@ namespace NX
 
         public static Option<Unit> Try<T>(this Option<T> t, Action<T> f)
         {
-            return !t.HasValue ? new Option<Unit>(new NullReferenceException("This is None<" + typeof(T).Name + ">")) : Try(() => f(t.Value));
+            return !t.HasValue ? 
+                t.HasException ? 
+                    new Option<Unit>(t.InnerException) :
+                    new Option<Unit>(new NullReferenceException("This is None<" + typeof(T).Name + ">"))
+                : Try(() => f(t.Value));
         }
 
         public static Option<Unit> Try(this Action f)

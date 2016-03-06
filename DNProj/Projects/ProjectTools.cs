@@ -49,6 +49,8 @@ namespace DNProj
                     pg.AddNewProperty("DefineConstants", "DEBUG;TRACE;");
                     pg.AddNewProperty("ErrorReport", "prompt");
                     pg.AddNewProperty("WarningLevel", "4");
+                    if (arch != "AnyCPU")
+                        pg.AddNewProperty("PlatformTarget", arch);
                     return pg;
                 });
 
@@ -60,6 +62,8 @@ namespace DNProj
                     pg.AddNewProperty("OutputPath", "bin\\Release");
                     pg.AddNewProperty("ErrorReport", "prompt");
                     pg.AddNewProperty("WarningLevel", "4");
+                    if (arch != "AnyCPU")
+                        pg.AddNewProperty("PlatformTarget", arch);
                     return pg;
                 });
 
@@ -86,38 +90,38 @@ namespace DNProj
                 .First(x => string.IsNullOrEmpty(x.Condition));
         }
 
-        public static string DefaultConfiguration(this Project p)
+        public static BuildProperty DefaultConfiguration(this Project p)
         {
             return p.PropertyGroups.Cast<BuildPropertyGroup>()
-                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition == " '$(Configuration)' == '' ").Value)
+                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition == " '$(Configuration)' == '' "))
                 .DefaultLazy(() =>
                 {
                     var defcond = p.AssemblyPropertyGroup().AddNewProperty("Configuration", "Debug");
                     defcond.Condition = " '$(Configuration)' == '' ";
-                    return "Debug";
+                    return defcond;
                 });
         }
 
-        public static string DefaultTarget(this Project p)
+        public static BuildProperty DefaultTarget(this Project p)
         {
             return p.PropertyGroups.Cast<BuildPropertyGroup>()
-                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition == " '$(Platform)' == '' ").Value)
+                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition == " '$(Platform)' == '' "))
                 .DefaultLazy(() =>
                 {
                     var defarch = p.AssemblyPropertyGroup().AddNewProperty("Platform", "AnyCPU");
                     defarch.Condition = " '$(Platform)' == '' ";
-                    return "AnyCPU";
+                    return defarch;
                 });
         }
 
         public static BuildPropertyGroup DefaultDebugPropertyGroup(this Project p)
         {
-            return p.AddDefaultConfigurations(p.DefaultTarget()).Item1;
+            return p.AddDefaultConfigurations(p.DefaultTarget().Value).Item1;
         }
 
         public static BuildPropertyGroup DefaultReleasePropertyGroup(this Project p)
         {
-            return p.AddDefaultConfigurations(p.DefaultTarget()).Item2;
+            return p.AddDefaultConfigurations(p.DefaultTarget().Value).Item2;
         }
 
         public static IEnumerable<BuildItem> BuildItems(this Project p)
@@ -130,15 +134,33 @@ namespace DNProj
             return p.ItemGroups.Cast<BuildItemGroup>().SelectMany(xs => xs.Cast<BuildItem>()).Filter(x => x.Name == "Reference");
         }
 
-        public static Option<Project> GetProject(string defaultName)
+        public static Option<Project> GetProject(string defaultName = null)
         {
             return Environment.CurrentDirectory
                 .Try(x => defaultName ?? System.IO.Directory.GetFiles(x).Find(f => f.EndsWith("proj")))
-                .Map(x =>
+                .Try(x =>
                 {
                     var p = new Project();
                     p.Load(x);
                     return p;
+                });
+        }
+
+        public static Project LoadProject(this Command c, ref IEnumerable<string> args, ref string projName)
+        {
+            args = c.Options.Parse(args);
+            if (args.Any(Templates.HelpOptions.Contains))
+            {
+                c.Help(args);
+                Environment.Exit(0);
+            }
+            return GetProject(projName)
+                .DefaultLazy(() =>
+                {
+                    Console.WriteLine("error: project file not found.");
+                    c.Help(IENX.Singleton(""));
+                    Environment.Exit(1);
+                    return null;
                 });
         }
     }

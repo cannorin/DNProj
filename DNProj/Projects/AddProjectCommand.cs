@@ -52,31 +52,18 @@ example:
 
         public override void Run(IEnumerable<string> args)
         {
-            args = Options.Parse(args);
-            if (args.Count() < 1 || args.Any(Templates.HelpOptions.Contains))
-            {
-                Help(args);
-                return;
-            }
-            var p = ProjectTools.GetProject(projName)
-                .Match(x => x, () =>
-                {
-                    Console.WriteLine("error: project file not found.");
-                    Environment.Exit(1);
-                    return null;
-                });
+            var p = this.LoadProject(ref args, ref projName);
             foreach (var f in args)
             {
                 var fn = f;
                 var act = "Compile";
-                new []{ "Compile", "EmbeddedResource", "None" }.Iter(x =>
+                foreach (var x in new []{ "Compile", "EmbeddedResource", "None" })
+                    if (f.EndsWith(":" + x))
                     {
-                        if (f.EndsWith(":" + x))
-                        {
-                            act = x;
-                            fn = f.Replace(":" + x, "");
-                        }
-                    });
+                        act = x;
+                        fn = f.Replace(":" + x, "");
+                        break;
+                    }
                 p.SourceItemGroup().AddNewItem(act, fn);
                 p.Save(p.FullFileName);
             }

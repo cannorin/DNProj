@@ -25,7 +25,7 @@ using System.Runtime.CompilerServices;
 // Change them to the values specific to your project.
 
 [assembly: AssemblyTitle("DNProj")]
-[assembly: AssemblyDescription("Commandline Interface to create/edit projects & solutions")]
+[assembly: AssemblyDescription("Commandline interface to create/edit projects & solutions")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("")]

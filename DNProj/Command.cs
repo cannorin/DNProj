@@ -59,10 +59,9 @@ namespace DNProj
             if (Commands.Any())
             {
                 Console.WriteLine("\ncommands:");
-                foreach (var c in Commands.Values)
+                foreach (var c in Commands)
                 {
-                    var diff = c.Name.Split(' ').Except(Name.Split(' ')).First();
-                    var s = diff + " " + string.Join(" ", c.Args);
+                    var s = c.Key + " " + string.Join(" ", c.Value.Args);
                     Console.Write("  {0}", s);
                     if (27 - s.Length <= 0)
                     {
@@ -73,7 +72,7 @@ namespace DNProj
                     {
                         IENX.Repeat(" ", 27 - s.Length).Iter(Console.Write);
                     }
-                    Console.WriteLine(c.ShortDescription);
+                    Console.WriteLine(c.Value.ShortDescription);
                 }
                 Console.WriteLine("  help                       show this.");
             }
