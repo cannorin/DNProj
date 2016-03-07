@@ -38,6 +38,7 @@ namespace DNProj
             Commands["new"] = new NewProjectCommand();
             Commands["add"] = new AddProjectCommand();
             Commands["ls"] = new ListProjectCommand();
+            Commands["conf"] = new ConfProjectCommand();
         }
     }
 }

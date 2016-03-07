@@ -49,22 +49,16 @@ namespace DNProj
 
         public override void Run(IEnumerable<string> args)
         {
-            args = Options.Parse(args);
+            args = Options.SafeParse(args);
             if (args.Count() < 1 || args.Any(Templates.HelpOptions.Contains))
             {
                 Help(args);
                 return;
             }
             if (!(temp == "csharp" || temp == "fsharp" || temp == "none"))
-            {
-                Console.WriteLine("error: invalid language template '{0}'.", temp);
-                return;
-            }
+                Tools.FailWith("error: invalid language template '{0}'.", temp);
             if (!new []{ "library", "exe", "winexe", "module" }.Contains(type))
-            {
-                Console.WriteLine("error: invalid output type '{0}'.", type);
-                return;
-            }
+                Tools.FailWith("error: invalid output type '{0}'.", type);
 
             var f = Templates.GenPath(outputdir, args.First());
             var name = args.First().Split('.').Rev().Skip(1).Rev().JoinToString(".");

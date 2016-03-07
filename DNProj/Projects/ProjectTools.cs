@@ -93,7 +93,7 @@ namespace DNProj
         public static BuildProperty DefaultConfiguration(this Project p)
         {
             return p.PropertyGroups.Cast<BuildPropertyGroup>()
-                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition == " '$(Configuration)' == '' "))
+                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition.Replace(" ", "") == "'$(Configuration)'==''"))
                 .DefaultLazy(() =>
                 {
                     var defcond = p.AssemblyPropertyGroup().AddNewProperty("Configuration", "Debug");
@@ -105,7 +105,7 @@ namespace DNProj
         public static BuildProperty DefaultTarget(this Project p)
         {
             return p.PropertyGroups.Cast<BuildPropertyGroup>()
-                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition == " '$(Platform)' == '' "))
+                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition.Replace(" ", "") == "'$(Platform)'==''"))
                 .DefaultLazy(() =>
                 {
                     var defarch = p.AssemblyPropertyGroup().AddNewProperty("Platform", "AnyCPU");
@@ -141,14 +141,25 @@ namespace DNProj
                 .Try(x =>
                 {
                     var p = new Project();
-                    p.Load(x);
+                    try
+                    {
+                        p.Load(x);
+                    }
+                    catch (Microsoft.Build.BuildEngine.InvalidProjectFileException e)
+                    {
+                        Tools.FailWith("your project file {0} is corrupted. please fix it by yourself.\noriginal error:\n  {1}", x, e.Message);
+                    }
+                    catch
+                    {
+                        throw;
+                    }
                     return p;
                 });
         }
 
         public static Project LoadProject(this Command c, ref IEnumerable<string> args, ref string projName)
         {
-            args = c.Options.Parse(args);
+            args = c.Options.SafeParse(args);
             if (args.Any(Templates.HelpOptions.Contains))
             {
                 c.Help(args);

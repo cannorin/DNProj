@@ -66,7 +66,7 @@ namespace DNProj
                     if (27 - s.Length <= 0)
                     {
                         Console.WriteLine();
-                        IENX.Repeat(" ", 33).Iter(Console.Write);
+                        IENX.Repeat(" ", 29).Iter(Console.Write);
                     }
                     else
                     {
@@ -87,7 +87,7 @@ namespace DNProj
         /// <param name="args">Arguments.</param>
         public virtual void Run(IEnumerable<string> args)
         {
-            var rs = Options.Parse(args);
+            var rs = Options.SafeParse(args);
             if (rs.Count == 0)
                 Help(rs);
             else
@@ -96,18 +96,19 @@ namespace DNProj
 
                 if (Commands.ContainsKey(c))
                     Commands[c].Run(rs.Skip(1));
-                else if (Templates.HelpOptions.Contains(c))
-                {
-                    Help(rs);
-                }
                 else if (Commands.ContainsKey("this"))
                 {
                     Commands["this"].Run(rs);
+                }
+                else if (Templates.HelpOptions.Contains(c))
+                {
+                    Help(rs);
                 }
                 else
                 {
                     Console.WriteLine("command {0} not found.", c);
                     Help(rs);
+                    Environment.Exit(1);
                 }
             }
         }
@@ -117,8 +118,8 @@ namespace DNProj
     {
         Action<IEnumerable<string>> a;
 
-        public SimpleCommand(Action<IEnumerable<string>> f, string name, string desc, params string[] args)
-            : base(name, desc, desc, args)
+        public SimpleCommand(Action<IEnumerable<string>> f, string name, string desc, string sdesc, params string[] args)
+            : base(name, desc, sdesc, args)
         {
             a = f;
         }
@@ -132,7 +133,9 @@ namespace DNProj
         {
             Console.WriteLine(@"usage: {0} {1}
 
-{2}", Name, string.Join(" ", Args), Description);
+{2}
+
+for options, please view parent command's help.", Name, string.Join(" ", Args), Description);
         }
     }
 }

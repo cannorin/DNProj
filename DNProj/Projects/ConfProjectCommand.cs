@@ -26,13 +26,202 @@ using NX;
 using System.Diagnostics;
 using Mono.Options;
 using Microsoft.Build.BuildEngine;
+using Microsoft.Build.Construction;
+using System.Security.AccessControl;
 
 namespace DNProj
 {
-    public class ConfProjectCommand
+    public class ConfProjectCommand : Command
     {
+        string projName;
+        Option<int> gIndex;
+
         public ConfProjectCommand()
+            : base("dnproj conf", 
+                   @"show and edit project configurations.
+
+example:
+  $ dnproj conf show
+  $ dnproj conf set -i 1 OutputPath bin/Debug
+  $ dnproj conf set-condition Platform "" '\$(Platform)' == '' ""
+  $ dnproj conf rm OutputPath -i 1
+  $ dnproj conf add-group
+  $ dnprij conf set-group-condition -i 2 "" \$(MyCondition) == 'true' ""
+  $ dnproj conf rm-group -i 2
+
+warning:
+  on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", "show and edit project configurations.", "[options]")
         {
+            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("i=|group-index=", "specify index of property group you want to show or edit. indices are shown as \n'PropertyGroup #<index>'. [default=0]", i => gIndex = OptionNX.Option(int.Parse(i)));
+
+            Commands["show"] = new SimpleCommand(
+                args =>
+                {
+                    var p = Commands["show"].LoadProject(ref args, ref projName);
+                    var gs = Groups(p);
+                    if (args.LengthNX() == 0 && !gIndex.HasValue)
+                        foreach (var pg in gs.MapI((x, i) => new {v = x, i = i}))
+                            printPropertyGroup(pg.v, pg.i);
+                    else if (args.LengthNX() == 0)
+                    {
+                        var g = gs.Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
+                            {
+                                Tools.FailWith("error: index out of range.");
+                                return null;
+                            });
+                        printPropertyGroup(g, gIndex.Value);
+                    } 
+                }, "dnproj conf show", "show project configurations.", "show project configurations.", "[options]");
+
+            Commands["set"] = new SimpleCommand(
+                args =>
+                {
+                    var p = Commands["set"].LoadProject(ref args, ref projName);
+                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        });
+                    if (args.LengthNX() < 1)
+                        Tools.FailWith("error: missing parameter.");
+                    else
+                    {
+                        var name = args.First();
+                        var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
+
+                        if (g.Cast<BuildProperty>().Any(x => x.Name == name))
+                            g.SetProperty(name, val);
+                        else
+                            g.AddNewProperty(name, val);
+                    }
+                    printPropertyGroup(g, Groups(p).IndexOf(g));
+                    p.Save(p.FullFileName);
+                }, "dnproj conf set", "add or change property value.\ngiving empty <value> will set empty value.", "add or change property value.", "<name>", "<value>", "[options]");
+
+            Commands["set-condition"] = new SimpleCommand(
+                args =>
+                {
+                    var p = Commands["set-condition"].LoadProject(ref args, ref projName);
+                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        }); 
+                    if (args.LengthNX() < 1)
+                        Tools.FailWith("error: missing parameter.");
+                    else
+                    {
+                        var name = args.First();
+                        var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
+
+                        g.Cast<BuildProperty>()
+                                .Try(ys => ys.Find(x => x.Name == name))
+                                .Match(
+                            y => y.Condition = val,
+                            () => Tools.FailWith("error: property with name '{0}' doesn't exist.", name)
+                        );
+                        printPropertyGroup(g, Groups(p).IndexOf(g));
+                    }
+                    p.Save(p.FullFileName);
+                }, "dnproj conf set-condition", "set conditon to property.\ngiving empty <condition> will remove condition.", "set condition to property.", "<name>", "<condition>", "[options]");
+
+            Commands["rm"] = new SimpleCommand(
+                args =>
+                {
+                    var p = Commands["rm"].LoadProject(ref args, ref projName);
+                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        }); 
+                    foreach (var s in args)
+                    {
+                        if (g.Cast<BuildProperty>().Any(x => x.Name == s))
+                            g.RemoveProperty(s);
+                        else
+                            Tools.FailWith("error: property with name '{0}' doesn't exist.", s);
+                    }
+                    printPropertyGroup(g, Groups(p).IndexOf(g));
+                    p.Save(p.FullFileName);
+                }, "dnproj conf rm", "remove property.", "remove property.", "<name>+", "[options]");
+
+            Commands["add-group"] = new SimpleCommand(
+                args =>
+                {
+                    var p = Commands["add-group"].LoadProject(ref args, ref projName);
+                    var cond = args.JoinToString(" ");
+                    var g = p.AddNewPropertyGroup(false);
+                    if (!string.IsNullOrEmpty(cond))
+                        g.Condition = cond;
+                    p.Save(p.FullFileName);
+                }, "dnproj conf add-group", "add property group.", "add property group.", "[condition]", "[options]");
+
+            Commands["set-group-condition"] = new SimpleCommand(
+                args =>
+                {
+                    var p = Commands["set-group-condition"].LoadProject(ref args, ref projName);
+                    if (args.LengthNX() < 1)
+                        Tools.FailWith("error: missing parameter.");
+
+                    var cond = args.JoinToString(" ");
+                    gIndex.Map(Groups(p).Nth)
+                    .Match(
+                        g =>
+                        {
+                            if (!string.IsNullOrEmpty(cond))
+                                g.Condition = cond;
+                            p.Save(p.FullFileName); 
+                        },
+                        () => Tools.FailWith("error: group index not specified.")
+                    );
+                }, "dnproj set-group-condition", "set condition to specified group. -i option is required. \ngiving empty condition will remove condition.", "set condition to group.", "[condition]", "[options]");
+
+            Commands["rm-group"] = new SimpleCommand(
+                args =>
+                {
+                    var p = Commands["rm-group"].LoadProject(ref args, ref projName);
+
+                    gIndex.Map(Groups(p).Nth)
+                    .Match(
+                        g =>
+                        {
+                            p.RemovePropertyGroup(g);
+                            p.Save(p.FullFileName); 
+                        },
+                        () => Tools.FailWith("error: group index not specified.")
+                    );
+                }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
+        }
+
+        IEnumerable<BuildPropertyGroup> Groups(Project p)
+        {
+            return p.PropertyGroups.Cast<BuildPropertyGroup>().Filter(x => !x.IsImported);
+        }
+
+        void printPropertyGroup(BuildPropertyGroup b, int index)
+        {
+            Console.Write("PropertyGroup #{0}", index);
+            if (!string.IsNullOrEmpty(b.Condition))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(" when ({0})", b.Condition);
+                Console.ResetColor();
+            }
+            else
+                Console.WriteLine();
+            foreach (var px in b.Cast<BuildProperty>())
+            {
+                Console.Write("  {0} = {1}", px.Name, px.FinalValue);
+                if (!string.IsNullOrEmpty(px.Condition))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(" when ({0})", px.Condition);
+                    Console.ResetColor();
+                }
+                else
+                    Console.WriteLine();
+            }
         }
     }
 }

@@ -28,6 +28,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Net.NetworkInformation;
 
 namespace NX
 {
@@ -54,8 +55,21 @@ namespace NX
         }
     }
 
+    public static class ArrayNX
+    {
+        public static T[] New<T>(params T[] ts)
+        {
+            return ts;
+        }
+    }
+
     public static class IENX
     {
+        public static IEnumerable<T> New<T>(params T[] ts)
+        {
+            return ts;
+        }
+
         public static IEnumerable<string> EnumerateLines(this StreamReader sr)
         {
             while (!sr.EndOfStream)
@@ -128,7 +142,7 @@ namespace NX
 
         public static T Nth<T>(this IEnumerable<T> seq, int n)
         {
-            if (n < seq.Count() - 1)
+            if (n > seq.Count() - 1)
                 throw new IndexOutOfRangeException();
             else
                 return seq.Skip(n).First();
@@ -469,7 +483,7 @@ namespace NX
             }
         }
 
-        public Option(Exception e)
+        public Option(Exception e, bool dummy)
         {
             this.HasValue = false;
             this.HasException = true;
@@ -691,8 +705,8 @@ namespace NX
         {
             return !t.HasValue ?
                 t.HasException ?
-                    new Option<TR>(t.InnerException) :
-                    new Option<TR>(new NullReferenceException("This is None<" + typeof(T).Name + ">"))
+                    new Option<TR>(t.InnerException, false) :
+                    new Option<TR>(new NullReferenceException("This is None<" + typeof(T).Name + ">"), false)
             : Try(() => f(t.Value));
         }
 
@@ -704,7 +718,7 @@ namespace NX
             }
             catch (Exception e)
             {
-                return new Option<T>(e);
+                return new Option<T>(e, false);
             }
         }
 
@@ -717,8 +731,8 @@ namespace NX
         {
             return !t.HasValue ? 
                 t.HasException ? 
-                    new Option<Unit>(t.InnerException) :
-                    new Option<Unit>(new NullReferenceException("This is None<" + typeof(T).Name + ">"))
+                    new Option<Unit>(t.InnerException, false) :
+                    new Option<Unit>(new NullReferenceException("This is None<" + typeof(T).Name + ">"), false)
                 : Try(() => f(t.Value));
         }
 
@@ -731,7 +745,7 @@ namespace NX
             }
             catch (Exception e)
             {
-                return new Option<Unit>(e);
+                return new Option<Unit>(e, false);
             }
         }
     }
