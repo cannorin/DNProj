@@ -39,6 +39,7 @@ namespace DNProj
             Commands["add"] = new AddProjectCommand();
             Commands["rm"] = new RmProjectCommand();
             Commands["ls"] = new ListProjectCommand();
+            Commands["edit"] = new EditProjectCommand();
             Commands["conf"] = new ConfProjectCommand();
             Commands["item"] = new ItemProjectCommand();
         }

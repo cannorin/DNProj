@@ -24,7 +24,6 @@ using System.IO;
 using System.Linq;
 using NX;
 using System.Diagnostics;
-using Mono.Options;
 using Microsoft.Build.BuildEngine;
 using Microsoft.Build.Construction;
 using System.Security.AccessControl;
@@ -53,7 +52,7 @@ warning:
   on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", "show and edit project configurations.", "<command>", "[options]")
         {
             Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
-            Options.Add("i=|group-index=", "specify index of property group you want to show or edit. indices are shown as \n'PropertyGroup #<index>'. [default=0]", i => gIndex = OptionNX.Option(int.Parse(i)));
+            Options.Add("i=|group-index=", "specify index of property group you want to show or edit. indices are shown as \n'PropertyGroup #<index>'. [default=0]", i => gIndex = Option.Some(int.Parse(i)));
 
             Commands["show"] = new SimpleCommand(
                 args =>
@@ -203,22 +202,14 @@ warning:
         {
             Console.Write("PropertyGroup #{0}", index);
             if (!string.IsNullOrEmpty(b.Condition))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(" when ({0})", b.Condition);
-                Console.ResetColor();
-            }
+                ConsoleNX.ColoredWriteLine(" when ({0})", ConsoleColor.Red, b.Condition);
             else
                 Console.WriteLine();
             foreach (var px in b.Cast<BuildProperty>())
             {
                 Console.Write("  {0} = {1}", px.Name, px.FinalValue);
                 if (!string.IsNullOrEmpty(px.Condition))
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(" when ({0})", px.Condition);
-                    Console.ResetColor();
-                }
+                    ConsoleNX.ColoredWriteLine(" when ({0})", ConsoleColor.Red, px.Condition);
                 else
                     Console.WriteLine();
             }

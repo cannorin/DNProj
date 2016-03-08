@@ -73,15 +73,15 @@ namespace DNProj
         public static BuildItemGroup SourceItemGroup(this Project p)
         {
             return p.ItemGroups.Cast<BuildItemGroup>()
-                .Try(xs => xs.First(x => !x.ToArray().Any() || x.ToArray().Any(b => new []{ "Compile", "EmbeddedResource", "None" }.Contains(b.Name))))
-                .DefaultLazy(() => p.AddNewItemGroup());
+                .Try(xs => xs.First(x => !x.ToArray().Any() || x.ToArray().Any(b => Templates.BuildItems.Contains(b.Name))))
+                .DefaultLazy(p.AddNewItemGroup);
         }
 
         public static BuildItemGroup ReferenceItemGroup(this Project p)
         {
             return p.ItemGroups.Cast<BuildItemGroup>()
                 .Try(xs => xs.First(x => !x.ToArray().Any() || x.ToArray().Any(b => b.Name == "Reference")))
-                .DefaultLazy(() => 　p.AddNewItemGroup()); 
+                .DefaultLazy(p.AddNewItemGroup); 
         }
 
         public static BuildPropertyGroup AssemblyPropertyGroup(this Project p)
@@ -126,12 +126,12 @@ namespace DNProj
 
         public static IEnumerable<BuildItem> BuildItems(this Project p)
         {
-            return p.ItemGroups.Cast<BuildItemGroup>().SelectMany(xs => xs.Cast<BuildItem>()).Filter(x => new []{ "Compile", "EmbeddedResource", "None" }.Contains(x.Name));
+            return p.ItemGroups.Cast<BuildItemGroup>().Filter(xs => !xs.IsImported).SelectMany(xs => xs.Cast<BuildItem>()).Filter(x => Templates.BuildItems.Contains(x.Name));
         }
 
         public static IEnumerable<BuildItem> ReferenceItems(this Project p)
         {
-            return p.ItemGroups.Cast<BuildItemGroup>().SelectMany(xs => xs.Cast<BuildItem>()).Filter(x => x.Name == "Reference");
+            return p.ItemGroups.Cast<BuildItemGroup>().Filter(xs => !xs.IsImported).SelectMany(xs => xs.Cast<BuildItem>()).Filter(x => x.Name == "Reference");
         }
 
         public static Option<Project> GetProject(string defaultName = null)
@@ -145,13 +145,9 @@ namespace DNProj
                     {
                         p.Load(x);
                     }
-                    catch (Microsoft.Build.BuildEngine.InvalidProjectFileException e)
+                    catch (InvalidProjectFileException e)
                     {
                         Tools.FailWith("your project file {0} is corrupted. please fix it by yourself.\noriginal error:\n  {1}", x, e.Message);
-                    }
-                    catch
-                    {
-                        throw;
                     }
                     return p;
                 });
@@ -169,7 +165,7 @@ namespace DNProj
                 .DefaultLazy(() =>
                 {
                     Console.WriteLine("error: project file not found.");
-                    c.Help(IENX.Singleton(""));
+                    c.Help(New.Seq(""));
                     Environment.Exit(1);
                     return null;
                 });

@@ -24,7 +24,6 @@ using System.IO;
 using System.Linq;
 using NX;
 using System.Diagnostics;
-using Mono.Options;
 using Microsoft.Build.BuildEngine;
 using Microsoft.Build.Construction;
 using System.Security.AccessControl;
@@ -46,6 +45,7 @@ example:
   $ dnproj item add -i 1 A.cs B.png:EmbeddedResource C.txt:None
   $ dnproj item add System.Core:Reference
   $ dnproj item set-condition -i 1 A.cs "" '\$(Platform)' == 'AnyCPU' ""
+  $ dnproj item set-hintpath System.Core ../packages/System.Core.1.0.0/lib/net45/System.Core.dll
   $ dnproj item rm -i 1 B.png
   $ dnproj item add-group
   $ dnprij item set-group-condition -i 2 "" \$(MyCondition) == 'true' ""
@@ -55,7 +55,7 @@ warning:
   on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", "show and edit build items.", "<command>", "[options]")
         {
             Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
-            Options.Add("i=|group-index=", "specify index of item group you want to show or edit. indices are shown as \n'ItemGroup #<index>'. [default=0]", i => gIndex = OptionNX.Option(int.Parse(i)));
+            Options.Add("i=|group-index=", "specify index of item group you want to show or edit. indices are shown as \n'ItemGroup #<index>'. [default=0]", i => gIndex = Option.Some(int.Parse(i)));
 
             Commands["show"] = new SimpleCommand(
                 args =>
@@ -138,6 +138,40 @@ build actions:
                     }
                     p.Save(p.FullFileName);
                 }, "dnproj item set-condition", "set conditon to item.\ngiving empty <condition> will remove condition.", "set condition to item.", "<filename>", "<condition>", "[options]");
+
+            Commands["set-hintpath"] = new SimpleCommand(
+                args =>
+                {
+                    var p = Commands["set-hintpath"].LoadProject(ref args, ref projName);
+                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        }); 
+                    if (args.LengthNX() < 1)
+                        Tools.FailWith("error: missing parameter.");
+                    else
+                    {
+                        var name = args.First();
+                        var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
+
+                        g.Cast<BuildItem>()
+                            .Try(ys => ys.Find(x => x.Include == name))
+                            .Match(
+                            y =>
+                            {
+                                if (string.IsNullOrEmpty(val) && y.HasMetadata("HintPath"))
+                                    y.RemoveMetadata("HintPath");
+                                else
+                                    y.SetMetadata("HintPath", val);
+                            },
+                            () => Tools.FailWith("error: item with name '{0}' doesn't exist.", name)
+                        );
+                        printItemGroup(g, Groups(p).IndexOf(g));
+                    }
+                    p.Save(p.FullFileName);
+                }, "dnproj item set-hintpath", "set hint path to item.\ngiving empty <path> will remove hint path.", "set hint path to item.", "<filename>", "<path>", "[options]");
+            
 
             Commands["rm"] = new SimpleCommand(
                 args =>
@@ -234,6 +268,8 @@ build actions:
                 }
                 else
                     Console.WriteLine();
+                if (px.HasMetadata("HintPath"))
+                    Console.WriteLine("    HintPath: {0}", px.GetEvaluatedMetadata("HintPath"));
             }
         }
     }

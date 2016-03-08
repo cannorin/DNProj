@@ -89,6 +89,9 @@ namespace DNProj
             var debugProperty = gs.Item1;
             var releaseProperty = gs.Item2;
 
+            // add sources
+            var sourceItems = p.AddNewItemGroup();
+
             // add references
             var referenceItems = p.AddNewItemGroup();
             referenceItems.AddNewItem("Reference", "System");
@@ -99,9 +102,6 @@ namespace DNProj
                 referenceItems.AddNewItem("Reference", "System.Core");
                 referenceItems.AddNewItem("Reference", "System.Numerics");
             }
-
-            // add sources
-            var sourceItems = p.AddNewItemGroup();
 
             // custom
             if (temp == "csharp")
@@ -155,7 +155,7 @@ namespace DNProj
                 p.AddNewImport("$(MSBuildExtensionsPath32)\\..\\Microsoft SDKs\\F#\\3.1\\Framework\\v4.0\\Microsoft.FSharp.Targets", "");
 
             // save
-            IDisposableNX.SelectMany(
+            Using.SelectMany(
                 File.OpenWrite(f).Use(),
                 fs => new StreamWriter(fs).Use(),
                 (_, sw) => p.Save(sw)

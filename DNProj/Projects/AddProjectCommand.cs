@@ -57,7 +57,7 @@ example:
             {
                 var fn = f;
                 var act = "Compile";
-                foreach (var x in new []{ "Compile", "EmbeddedResource", "None" })
+                foreach (var x in New.Seq("Compile", "EmbeddedResource", "None"))
                     if (f.EndsWith(":" + x))
                     {
                         act = x;

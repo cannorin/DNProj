@@ -20,11 +20,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using NX;
-using System.Diagnostics;
-using Mono.Options;
 using Microsoft.Build.BuildEngine;
 
 namespace DNProj
@@ -43,17 +38,25 @@ namespace DNProj
         {
             var p = this.LoadProject(ref args, ref projName);
             Console.WriteLine(p.FullFileName);
+            Console.WriteLine("References:");
+            foreach (var px in p.ReferenceItems())
+            {
+                Console.Write("  {1} ({0})", px.Name, px.Include);
+                if (!string.IsNullOrEmpty(px.Condition))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(" when ({0})", px.Condition);
+                    Console.ResetColor();
+                }
+                else
+                    Console.WriteLine();
+                if (px.HasMetadata("HintPath"))
+                    Console.WriteLine("    HintPath: {0}", px.GetEvaluatedMetadata("HintPath"));
+            }
             Console.WriteLine("Files:");
             foreach (var i in p.BuildItems())
             {
                 Console.WriteLine("  {0} ({1})", i.Include, i.Name + (string.IsNullOrEmpty(i.Condition) ? "" : ", " + i.Condition));
-            }
-            Console.WriteLine("References:");
-            foreach (var i in p.ReferenceItems())
-            {
-                Console.WriteLine("  {0}", i.Include + (string.IsNullOrEmpty(i.Condition) ? "" : " (" + i.Condition + ")"));
-                if (i.HasMetadata("HintPath"))
-                    Console.WriteLine("    HintPath: {0}", i.GetEvaluatedMetadata("HintPath"));
             }
         }
     }

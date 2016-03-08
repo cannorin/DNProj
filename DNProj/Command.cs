@@ -66,11 +66,11 @@ namespace DNProj
                     if (27 - s.Length <= 0)
                     {
                         Console.WriteLine();
-                        IENX.Repeat(" ", 29).Iter(Console.Write);
+                        Seq.Repeat(" ", 29).Iter(Console.Write);
                     }
                     else
                     {
-                        IENX.Repeat(" ", 27 - s.Length).Iter(Console.Write);
+                        Seq.Repeat(" ", 27 - s.Length).Iter(Console.Write);
                     }
                     Console.WriteLine(c.Value.ShortDescription);
                 }
@@ -135,7 +135,7 @@ namespace DNProj
 
 {2}
 
-for options, please view parent command's help.", Name, string.Join(" ", Args), Description);
+for options, please see parent command's help.", Name, string.Join(" ", Args), Description);
         }
     }
 }

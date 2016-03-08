@@ -1,0 +1,3 @@
+[submodule "NX"]
+	path = NX
+	url = git@github.com:cannorin/NX.git

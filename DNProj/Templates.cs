@@ -32,6 +32,8 @@ namespace DNProj
     {
         public static string[] HelpOptions { get; } = new []{"help", "--help", "-h", "-?"};
 
+        public static string[] BuildItems { get; } = new []{ "Compile", "EmbeddedResource", "None", "Content" };
+
         public static string AssemblyInfo { get; } = "AssemblyInfo.cs";
 
         public static string AssemblyInfoFSharp { get; } = "AssemblyInfo.fs";
