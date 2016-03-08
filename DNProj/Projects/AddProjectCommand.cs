@@ -45,7 +45,7 @@ build actions:
 
 example:
   $ dnproj add A.cs B.png:EmbeddedResource C.txt:None", 
-                   "add files.", "<filename>", "[options]")
+                   "add files.", "<filename[:buildaction]>+", "[options]")
         {
             Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
         }
@@ -65,8 +65,8 @@ example:
                         break;
                     }
                 p.SourceItemGroup().AddNewItem(act, fn);
-                p.Save(p.FullFileName);
             }
+            p.Save(p.FullFileName);
         }
     }
 }

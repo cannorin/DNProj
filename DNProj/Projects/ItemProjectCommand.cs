@@ -31,29 +31,31 @@ using System.Security.AccessControl;
 
 namespace DNProj
 {
-    public class ConfProjectCommand : Command
+    public class ItemProjectCommand : Command
     {
         string projName;
         Option<int> gIndex;
 
-        public ConfProjectCommand()
-            : base("dnproj conf", 
-                   @"show and edit project configurations.
+        public ItemProjectCommand()
+            : base("dnproj item", 
+                   @"show and edit build items.
+in most cases, you can use 'dnproj add' and 'dnproj rm' instead.
 
 example:
-  $ dnproj conf show
-  $ dnproj conf set -i 1 OutputPath bin/Debug
-  $ dnproj conf set-condition Platform "" '\$(Platform)' == '' ""
-  $ dnproj conf rm OutputPath -i 1
-  $ dnproj conf add-group
-  $ dnprij conf set-group-condition -i 2 "" \$(MyCondition) == 'true' ""
-  $ dnproj conf rm-group -i 2
+  $ dnproj item show
+  $ dnproj item add -i 1 A.cs B.png:EmbeddedResource C.txt:None
+  $ dnproj item add System.Core:Reference
+  $ dnproj item set-condition -i 1 A.cs "" '\$(Platform)' == 'AnyCPU' ""
+  $ dnproj item rm -i 1 B.png
+  $ dnproj item add-group
+  $ dnprij item set-group-condition -i 2 "" \$(MyCondition) == 'true' ""
+  $ dnproj item rm-group -i 2
 
 warning:
-  on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", "show and edit project configurations.", "<command>", "[options]")
+  on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", "show and edit build items.", "<command>", "[options]")
         {
             Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
-            Options.Add("i=|group-index=", "specify index of property group you want to show or edit. indices are shown as \n'PropertyGroup #<index>'. [default=0]", i => gIndex = OptionNX.Option(int.Parse(i)));
+            Options.Add("i=|group-index=", "specify index of item group you want to show or edit. indices are shown as \n'ItemGroup #<index>'. [default=0]", i => gIndex = OptionNX.Option(int.Parse(i)));
 
             Commands["show"] = new SimpleCommand(
                 args =>
@@ -62,7 +64,7 @@ warning:
                     var gs = Groups(p);
                     if (args.LengthNX() == 0 && !gIndex.HasValue)
                         foreach (var pg in gs.MapI((x, i) => new {v = x, i = i}))
-                            printPropertyGroup(pg.v, pg.i);
+                            printItemGroup(pg.v, pg.i);
                     else if (args.LengthNX() == 0)
                     {
                         var g = gs.Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
@@ -70,14 +72,14 @@ warning:
                                 Tools.FailWith("error: index out of range.");
                                 return null;
                             });
-                        printPropertyGroup(g, gIndex.Value);
+                        printItemGroup(g, gIndex.Value);
                     } 
-                }, "dnproj conf show", "show project configurations.", "show project configurations.", "[options]");
+                }, "dnproj item show", "show project itemigurations.", "show project itemigurations.", "[options]");
 
-            Commands["set"] = new SimpleCommand(
+            Commands["add"] = new SimpleCommand(
                 args =>
                 {
-                    var p = Commands["set"].LoadProject(ref args, ref projName);
+                    var p = Commands["add"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
                         {
                             Tools.FailWith("error: index out of range.");
@@ -86,18 +88,29 @@ warning:
                     if (args.LengthNX() < 1)
                         Tools.FailWith("error: missing parameter.");
                     else
-                    {
-                        var name = args.First();
-                        var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
-
-                        if (g.Cast<BuildProperty>().Any(x => x.Name == name))
-                            g.SetProperty(name, val);
-                        else
-                            g.AddNewProperty(name, val);
-                    }
-                    printPropertyGroup(g, Groups(p).IndexOf(g));
+                        foreach (var f in args)
+                        {
+                            var fn = f;
+                            var act = "Compile";
+                            foreach (var x in new []{ "Compile", "EmbeddedResource", "None", "Reference" })
+                                if (f.EndsWith(":" + x))
+                                {
+                                    act = x;
+                                    fn = f.Replace(":" + x, "");
+                                    break;
+                                }
+                            g.AddNewItem(act, fn);
+                        }
+                    printItemGroup(g, Groups(p).IndexOf(g));
                     p.Save(p.FullFileName);
-                }, "dnproj conf set", "add or change property value.\ngiving empty <value> will set empty value.", "add or change property value.", "<name>", "<value>", "[options]");
+                }, "dnproj item add", @"add files to specified project.
+use <filename:buildaction> to specify build action.
+
+build actions:
+  Compile                    compile this file. (default)
+  EmbeddedResource           embed this as resource.
+  None                       do nothing.
+  Reference                  treat as reference.", "add items.", "<filename[:buildaction]>+", "[options]");
 
             Commands["set-condition"] = new SimpleCommand(
                 args =>
@@ -115,16 +128,16 @@ warning:
                         var name = args.First();
                         var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
 
-                        g.Cast<BuildProperty>()
-                                .Try(ys => ys.Find(x => x.Name == name))
-                                .Match(
+                        g.Cast<BuildItem>()
+                         .Try(ys => ys.Find(x => x.Include == name))
+                         .Match(
                             y => y.Condition = val,
-                            () => Tools.FailWith("error: property with name '{0}' doesn't exist.", name)
+                            () => Tools.FailWith("error: item with name '{0}' doesn't exist.", name)
                         );
-                        printPropertyGroup(g, Groups(p).IndexOf(g));
+                        printItemGroup(g, Groups(p).IndexOf(g));
                     }
                     p.Save(p.FullFileName);
-                }, "dnproj conf set-condition", "set conditon to property.\ngiving empty <condition> will remove condition.", "set condition to property.", "<name>", "<condition>", "[options]");
+                }, "dnproj item set-condition", "set conditon to item.\ngiving empty <condition> will remove condition.", "set condition to item.", "<filename>", "<condition>", "[options]");
 
             Commands["rm"] = new SimpleCommand(
                 args =>
@@ -136,26 +149,26 @@ warning:
                             return null;
                         }); 
                     foreach (var s in args)
-                    {
-                        if (g.Cast<BuildProperty>().Any(x => x.Name == s))
-                            g.RemoveProperty(s);
-                        else
-                            Tools.FailWith("error: property with name '{0}' doesn't exist.", s);
-                    }
-                    printPropertyGroup(g, Groups(p).IndexOf(g));
+                        g.Cast<BuildItem>()
+                         .Try(xs => xs.First(x => x.Include == s))
+                         .Match(
+                            g.RemoveItem, 
+                            () => Tools.FailWith("error: item with name '{0}' doesn't exist.", s)
+                        );
+                    printItemGroup(g, Groups(p).IndexOf(g));
                     p.Save(p.FullFileName);
-                }, "dnproj conf rm", "remove property.", "remove property.", "<name>+", "[options]");
+                }, "dnproj item rm", "remove item.", "remove item.", "<filename>+", "[options]");
 
             Commands["add-group"] = new SimpleCommand(
                 args =>
                 {
                     var p = Commands["add-group"].LoadProject(ref args, ref projName);
                     var cond = args.JoinToString(" ");
-                    var g = p.AddNewPropertyGroup(false);
+                    var g = p.AddNewItemGroup();
                     if (!string.IsNullOrEmpty(cond))
                         g.Condition = cond;
                     p.Save(p.FullFileName);
-                }, "dnproj conf add-group", "add property group.", "add property group.", "[condition]", "[options]");
+                }, "dnproj item add-group", "add item group.", "add item group.", "[condition]", "[options]");
 
             Commands["set-group-condition"] = new SimpleCommand(
                 args =>
@@ -186,7 +199,7 @@ warning:
                     .Match(
                         g =>
                         {
-                            p.RemovePropertyGroup(g);
+                            p.RemoveItemGroup(g);
                             p.Save(p.FullFileName); 
                         },
                         () => Tools.FailWith("error: group index not specified.")
@@ -194,14 +207,14 @@ warning:
                 }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
         }
 
-        IEnumerable<BuildPropertyGroup> Groups(Project p)
+        IEnumerable<BuildItemGroup> Groups(Project p)
         {
-            return p.PropertyGroups.Cast<BuildPropertyGroup>().Filter(x => !x.IsImported);
+            return p.ItemGroups.Cast<BuildItemGroup>().Filter(x => !x.IsImported);
         }
 
-        void printPropertyGroup(BuildPropertyGroup b, int index)
+        void printItemGroup(BuildItemGroup b, int index)
         {
-            Console.Write("PropertyGroup #{0}", index);
+            Console.Write("ItemGroup #{0}", index);
             if (!string.IsNullOrEmpty(b.Condition))
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -210,9 +223,9 @@ warning:
             }
             else
                 Console.WriteLine();
-            foreach (var px in b.Cast<BuildProperty>())
+            foreach (var px in b.Cast<BuildItem>())
             {
-                Console.Write("  {0} = {1}", px.Name, px.FinalValue);
+                Console.Write("  {1} ({0})", px.Name, px.Include);
                 if (!string.IsNullOrEmpty(px.Condition))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;

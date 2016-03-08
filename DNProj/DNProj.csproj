@@ -58,6 +58,8 @@
     <Compile Include="Projects\ListProjectCommand.cs" />
     <Compile Include="Projects\ConfProjectCommand.cs" />
     <Compile Include="Tools.cs" />
+    <Compile Include="Projects\ItemProjectCommand.cs" />
+    <Compile Include="Projects\RmProjectCommand.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NX\" />
