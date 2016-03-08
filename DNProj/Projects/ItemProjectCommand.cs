@@ -20,13 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using NX;
-using System.Diagnostics;
 using Microsoft.Build.BuildEngine;
-using Microsoft.Build.Construction;
-using System.Security.AccessControl;
 
 namespace DNProj
 {
@@ -68,10 +64,10 @@ warning:
                     else if (args.LengthNX() == 0)
                     {
                         var g = gs.Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                            {
-                                Tools.FailWith("error: index out of range.");
-                                return null;
-                            });
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        });
                         printItemGroup(g, gIndex.Value);
                     } 
                 }, "dnproj item show", "show project itemigurations.", "show project itemigurations.", "[options]");
@@ -81,10 +77,10 @@ warning:
                 {
                     var p = Commands["add"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        });
+                    {
+                        Tools.FailWith("error: index out of range.");
+                        return null;
+                    });
                     if (args.LengthNX() < 1)
                         Tools.FailWith("error: missing parameter.");
                     else
@@ -117,10 +113,10 @@ build actions:
                 {
                     var p = Commands["set-condition"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        }); 
+                    {
+                        Tools.FailWith("error: index out of range.");
+                        return null;
+                    }); 
                     if (args.LengthNX() < 1)
                         Tools.FailWith("error: missing parameter.");
                     else
@@ -144,10 +140,10 @@ build actions:
                 {
                     var p = Commands["set-hintpath"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        }); 
+                    {
+                        Tools.FailWith("error: index out of range.");
+                        return null;
+                    }); 
                     if (args.LengthNX() < 1)
                         Tools.FailWith("error: missing parameter.");
                     else
@@ -178,10 +174,10 @@ build actions:
                 {
                     var p = Commands["rm"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        }); 
+                    {
+                        Tools.FailWith("error: index out of range.");
+                        return null;
+                    }); 
                     foreach (var s in args)
                         g.Cast<BuildItem>()
                          .Try(xs => xs.First(x => x.Include == s))

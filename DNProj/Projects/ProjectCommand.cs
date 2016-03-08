@@ -18,16 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using NX;
-using System.Diagnostics;
-using Mono.Options;
-using Microsoft.Build.BuildEngine;
-using System.CodeDom.Compiler;
-
 namespace DNProj
 {
     public class ProjectCommand : Command

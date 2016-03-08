@@ -20,13 +20,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using NX;
-using System.Diagnostics;
-using Mono.Options;
 using Microsoft.Build.BuildEngine;
-using System.Xml.Serialization;
 
 namespace DNProj
 {

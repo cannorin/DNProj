@@ -23,8 +23,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NX;
-using System.Diagnostics;
-using Mono.Options;
 using Microsoft.Build.BuildEngine;
 
 namespace DNProj
@@ -50,7 +48,7 @@ namespace DNProj
         public override void Run(IEnumerable<string> args)
         {
             args = Options.SafeParse(args);
-            if (args.Count() < 1 || args.Any(Templates.HelpOptions.Contains))
+            if (!args.Any() || args.Any(Templates.HelpOptions.Contains))
             {
                 Help(args);
                 return;

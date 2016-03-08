@@ -23,12 +23,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NX;
-using System.Diagnostics;
-using Mono.Options;
 using Microsoft.Build.BuildEngine;
-using System.Runtime.Serialization;
-using System.Xml.Linq;
-using Microsoft.Build.Exceptions;
 
 namespace DNProj
 {
@@ -50,8 +45,8 @@ namespace DNProj
             var s = "#References:" + Environment.NewLine
                     + p.ReferenceItemGroup().Cast<BuildItem>().Map(x => 
                         string.Format("{0} {1}", x.Name, x.Include)
-                        + (string.IsNullOrEmpty(x.Condition) ? "" : string.Format(" Condition=\"{0}\"", x.Condition))
-                        + (x.HasMetadata("HintPath") ? string.Format(" HintPath=\"{0}\"", x.GetMetadata("HintPath")) : "")
+                    + (string.IsNullOrEmpty(x.Condition) ? "" : string.Format(" Condition=\"{0}\"", x.Condition))
+                    + (x.HasMetadata("HintPath") ? string.Format(" HintPath=\"{0}\"", x.GetMetadata("HintPath")) : "")
                     ).JoinToString(Environment.NewLine)
                     + Environment.NewLine
                     + "#Files:" + Environment.NewLine
