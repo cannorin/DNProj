@@ -45,8 +45,8 @@ namespace DNProj
             var p = this.LoadProject(ref args, ref projName);
             var s = StringNX.Build(sb =>
                 {
-                    sb.WriteLine("# lines starts with '#' will be ignored.");
-                    sb.WriteLine("# lines ends with '\\' will be joined to the next line.");
+                    sb.WriteLine("# lines start with '#' will be ignored.");
+                    sb.WriteLine("# lines end with '\\' will be joined to the next line.");
                     sb.WriteLine("# example:");
                     sb.WriteLine("#   Compile Program.cs");
                     sb.WriteLine("#   Reference System.Hoge \\\n#     Condition='$(Platform)' == 'x86' \\\n#     HintPath=./packages/test");
