@@ -78,7 +78,7 @@ warning:
                         Tools.FailWith("error: index out of range.");
                         return null;
                     });
-                    if (args.LengthNX() < 1)
+                    if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
                     else
                     {
@@ -103,7 +103,7 @@ warning:
                         Tools.FailWith("error: index out of range.");
                         return null;
                     }); 
-                    if (args.LengthNX() < 1)
+                    if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
                     else
                     {
@@ -156,7 +156,7 @@ warning:
                 args =>
                 {
                     var p = Commands["set-group-condition"].LoadProject(ref args, ref projName);
-                    if (args.LengthNX() < 1)
+                    if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
 
                     var cond = args.JoinToString(" ");

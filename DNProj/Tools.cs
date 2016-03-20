@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Options;
 using NX;
 
@@ -27,6 +28,16 @@ namespace DNProj
 {
     public static class Tools
     {
+        public static bool WeakEquals(this string s, string t)
+        {
+            return s.Replace(" ", "").Equals(t.Replace(" ", ""));
+        }
+
+        public static string RemoveHeadTailSpaces(this string s)
+        {
+            return s.SkipWhile(char.IsWhiteSpace).Rev().SkipWhile(char.IsWhiteSpace).Rev().JoinToString();
+        }
+
         public static void FailWith(string s, params object[] args)
         {
             Console.WriteLine(s, args);
@@ -36,13 +47,13 @@ namespace DNProj
         public static List<string> SafeParse(this OptionSet o, IEnumerable<string> args)
         {
             return o.Try(xs => xs.Parse(args)).MatchEx(x => x, e =>
-            {
-                e.Match(
-                    xe => Tools.FailWith("error: {0}", e.Value.Message), 
-                    () => Tools.FailWith("error: failed to parse arguments.")
-                );
-                return null;
-            });
+                {
+                    e.Match(
+                        xe => Tools.FailWith("error: {0}", e.Value.Message), 
+                        () => Tools.FailWith("error: failed to parse arguments.")
+                    );
+                    return null;
+                });
         }
     }
 }

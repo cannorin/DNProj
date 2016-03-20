@@ -5,7 +5,9 @@ Manage your \*proj and sln with commandline.
 
 # progress
 
-Currently, you can do nothing. :(
+``` dnproj ``` works now.
+
+``` dnsln ``` is still in progress.
 
 # dnproj
 
@@ -15,11 +17,11 @@ Create a project, add/remove files, install/restore NuGet package.
 
 ``` dnproj add SomeClass.cs ```
 
-``` dnproj remove SomeClass.cs ```
+``` dnproj rm SomeClass.cs ```
 
-``` dnproj install SomePackage ```
+``` dnproj add-ref System.Numerics ```
 
-``` dnproj restore ```
+``` dnproj rm-ref System.Numerics ```
 
 ``` dnproj edit ```
 

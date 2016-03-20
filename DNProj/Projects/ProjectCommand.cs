@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+using NX;
 
 namespace DNProj
 {
@@ -28,6 +29,8 @@ namespace DNProj
             Commands["new"] = new NewProjectCommand();
             Commands["add"] = new AddProjectCommand();
             Commands["rm"] = new RmProjectCommand();
+            Commands["add-ref"] = new AddRefProjectCommand();
+            Commands["rm-ref"] = new RmRefProjectCommand();
             Commands["ls"] = new ListProjectCommand();
             Commands["edit"] = new EditProjectCommand();
             Commands["conf"] = new ConfProjectCommand();

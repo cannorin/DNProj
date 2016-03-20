@@ -63,6 +63,8 @@
     <Compile Include="..\NX\NX.cs">
       <Link>NX.cs</Link>
     </Compile>
+    <Compile Include="Projects\AddRefProjectCommand.cs" />
+    <Compile Include="Projects\RmRefProjectCommand.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

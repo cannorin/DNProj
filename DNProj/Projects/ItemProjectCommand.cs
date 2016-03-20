@@ -34,7 +34,7 @@ namespace DNProj
         public ItemProjectCommand()
             : base("dnproj item", 
                    @"show and edit build items.
-in most cases, you can use 'dnproj add' and 'dnproj rm' instead.
+in most cases, you can use 'dnproj add', 'dnproj add-ref', 'dnproj rm', and 'dnproj rm-ref' instead.
 
 example:
   $ dnproj item show
@@ -64,10 +64,10 @@ warning:
                     else if (args.LengthNX() == 0)
                     {
                         var g = gs.Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        });
+                            {
+                                Tools.FailWith("error: index out of range.");
+                                return null;
+                            });
                         printItemGroup(g, gIndex.Value);
                     } 
                 }, "dnproj item show", "show project itemigurations.", "show project itemigurations.", "[options]");
@@ -77,11 +77,11 @@ warning:
                 {
                     var p = Commands["add"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    });
-                    if (args.LengthNX() < 1)
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        });
+                    if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
                     else
                         foreach (var f in args)
@@ -113,11 +113,11 @@ build actions:
                 {
                     var p = Commands["set-condition"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    }); 
-                    if (args.LengthNX() < 1)
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        }); 
+                    if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
                     else
                     {
@@ -140,11 +140,11 @@ build actions:
                 {
                     var p = Commands["set-hintpath"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    }); 
-                    if (args.LengthNX() < 1)
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        }); 
+                    if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
                     else
                     {
@@ -174,10 +174,10 @@ build actions:
                 {
                     var p = Commands["rm"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    }); 
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        }); 
                     foreach (var s in args)
                         g.Cast<BuildItem>()
                          .Try(xs => xs.First(x => x.Include == s))
@@ -204,7 +204,7 @@ build actions:
                 args =>
                 {
                     var p = Commands["set-group-condition"].LoadProject(ref args, ref projName);
-                    if (args.LengthNX() < 1)
+                    if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
 
                     var cond = args.JoinToString(" ");

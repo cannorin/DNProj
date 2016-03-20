@@ -34,34 +34,34 @@ namespace DNProj
             var dccond = string.Format("'$(Configuration)|$(Platform)' == '{0}'", dc);
             var rccond = string.Format("'$(Configuration)|$(Platform)' == '{0}'", rc);
             var ps = p.PropertyGroups.Cast<BuildPropertyGroup>();
-            var pgd = ps.Try(xs => xs.First(x => x.Condition == dccond)).DefaultLazy(() =>
-            {
-                var pg = p.AddNewPropertyGroup(false);
-                pg.Condition = dccond;
-                pg.AddNewProperty("DebugSymbols", "true");
-                pg.AddNewProperty("DebugType", "full");
-                pg.AddNewProperty("Optimize", "false");
-                pg.AddNewProperty("OutputPath", "bin\\Debug");
-                pg.AddNewProperty("DefineConstants", "DEBUG;TRACE;");
-                pg.AddNewProperty("ErrorReport", "prompt");
-                pg.AddNewProperty("WarningLevel", "4");
-                if (arch != "AnyCPU")
-                    pg.AddNewProperty("PlatformTarget", arch);
-                return pg;
-            });
+            var pgd = ps.Try(xs => xs.First(x => x.Condition.WeakEquals(dccond))).DefaultLazy(() =>
+                {
+                    var pg = p.AddNewPropertyGroup(false);
+                    pg.Condition = dccond;
+                    pg.AddNewProperty("DebugSymbols", "true");
+                    pg.AddNewProperty("DebugType", "full");
+                    pg.AddNewProperty("Optimize", "false");
+                    pg.AddNewProperty("OutputPath", "bin\\Debug");
+                    pg.AddNewProperty("DefineConstants", "DEBUG;TRACE;");
+                    pg.AddNewProperty("ErrorReport", "prompt");
+                    pg.AddNewProperty("WarningLevel", "4");
+                    if (arch != "AnyCPU")
+                        pg.AddNewProperty("PlatformTarget", arch);
+                    return pg;
+                });
 
-            var pgr = ps.Try(xs => xs.First(x => x.Condition == rccond)).DefaultLazy(() =>
-            {
-                var pg = p.AddNewPropertyGroup(false);
-                pg.Condition = rccond;
-                pg.AddNewProperty("Optimize", "true");
-                pg.AddNewProperty("OutputPath", "bin\\Release");
-                pg.AddNewProperty("ErrorReport", "prompt");
-                pg.AddNewProperty("WarningLevel", "4");
-                if (arch != "AnyCPU")
-                    pg.AddNewProperty("PlatformTarget", arch);
-                return pg;
-            });
+            var pgr = ps.Try(xs => xs.First(x => x.Condition.WeakEquals(rccond))).DefaultLazy(() =>
+                {
+                    var pg = p.AddNewPropertyGroup(false);
+                    pg.Condition = rccond;
+                    pg.AddNewProperty("Optimize", "true");
+                    pg.AddNewProperty("OutputPath", "bin\\Release");
+                    pg.AddNewProperty("ErrorReport", "prompt");
+                    pg.AddNewProperty("WarningLevel", "4");
+                    if (arch != "AnyCPU")
+                        pg.AddNewProperty("PlatformTarget", arch);
+                    return pg;
+                });
 
             return Tuple.Create(pgd, pgr);
         }
@@ -91,11 +91,11 @@ namespace DNProj
             return p.PropertyGroups.Cast<BuildPropertyGroup>()
                 .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition.Replace(" ", "") == "'$(Configuration)'==''"))
                 .DefaultLazy(() =>
-            {
-                var defcond = p.AssemblyPropertyGroup().AddNewProperty("Configuration", "Debug");
-                defcond.Condition = " '$(Configuration)' == '' ";
-                return defcond;
-            });
+                {
+                    var defcond = p.AssemblyPropertyGroup().AddNewProperty("Configuration", "Debug");
+                    defcond.Condition = " '$(Configuration)' == '' ";
+                    return defcond;
+                });
         }
 
         public static BuildProperty DefaultTarget(this Project p)
@@ -103,11 +103,11 @@ namespace DNProj
             return p.PropertyGroups.Cast<BuildPropertyGroup>()
                 .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition.Replace(" ", "") == "'$(Platform)'==''"))
                 .DefaultLazy(() =>
-            {
-                var defarch = p.AssemblyPropertyGroup().AddNewProperty("Platform", "AnyCPU");
-                defarch.Condition = " '$(Platform)' == '' ";
-                return defarch;
-            });
+                {
+                    var defarch = p.AssemblyPropertyGroup().AddNewProperty("Platform", "AnyCPU");
+                    defarch.Condition = " '$(Platform)' == '' ";
+                    return defarch;
+                });
         }
 
         public static BuildPropertyGroup DefaultDebugPropertyGroup(this Project p)
@@ -135,18 +135,18 @@ namespace DNProj
             return Environment.CurrentDirectory
                 .Try(x => defaultName ?? System.IO.Directory.GetFiles(x).Find(f => f.EndsWith("proj")))
                 .Try(x =>
-            {
-                var p = new Project();
-                try
                 {
-                    p.Load(x);
-                }
-                catch (InvalidProjectFileException e)
-                {
-                    Tools.FailWith("your project file {0} is corrupted. please fix it by yourself.\noriginal error:\n  {1}", x, e.Message);
-                }
-                return p;
-            });
+                    var p = new Project();
+                    try
+                    {
+                        p.Load(x);
+                    }
+                    catch (InvalidProjectFileException e)
+                    {
+                        Tools.FailWith("your project file {0} is corrupted. please fix it by yourself.\noriginal error:\n  {1}", x, e.Message);
+                    }
+                    return p;
+                });
         }
 
         public static Project LoadProject(this Command c, ref IEnumerable<string> args, ref string projName)
@@ -159,12 +159,12 @@ namespace DNProj
             }
             return GetProject(projName)
                 .DefaultLazy(() =>
-            {
-                Console.WriteLine("error: project file not found.");
-                c.Help(New.Seq(""));
-                Environment.Exit(1);
-                return null;
-            });
+                {
+                    Console.WriteLine("error: project file not found.");
+                    c.Help(New.Seq(""));
+                    Environment.Exit(1);
+                    return null;
+                });
         }
     }
 }
