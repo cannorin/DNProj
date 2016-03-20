@@ -26,15 +26,15 @@ using Microsoft.Build.BuildEngine;
 
 namespace DNProj
 {
-	public class AddRefProjectCommand : Command
-	{
-		string projName;
-		Option<string> cond;
-		Option<string> hint;
+    public class AddRefProjectCommand : Command
+    {
+        string projName;
+        Option<string> cond;
+        Option<string> hint;
 
-		public AddRefProjectCommand()
-			: base("dnproj add-ref", 
-			       @"add references to specified project.
+        public AddRefProjectCommand()
+            : base("dnproj add-ref", 
+                   @"add references to specified project.
 
 example:
   $ dnproj add-ref System.Numerics
@@ -43,28 +43,28 @@ example:
 
 warning:
   on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", 
-			       "add references.", "<referencename>", "[options]")
-		{
-			Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
-			Options.Add("c=|cond=", "specify condition.", c => cond = c.Some());
-			Options.Add("h=|hint=", "specify hint path.", h => hint = h.Some());
-		}
+                   "add references.", "<referencename>", "[options]")
+        {
+            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("c=|cond=", "specify condition.", c => cond = c.Some());
+            Options.Add("h=|hint=", "specify hint path.", h => hint = h.Some());
+        }
 
-		public override void Run(IEnumerable<string> args)
-		{
-			var p = this.LoadProject(ref args, ref projName);
-			var g = p.ReferenceItemGroup();
-			if (!args.Any())
-				Tools.FailWith("error: missing parameter.");
-			else
-			{
-				var name = args.First();
-				var i = g.AddNewItem("Reference", name);
-				cond.May(x => i.Condition = x);
-				hint.May(x => i.SetMetadata("HintPath", x));
-			}
-			p.Save(p.FullFileName);
-		}
-	}
+        public override void Run(IEnumerable<string> args)
+        {
+            var p = this.LoadProject(ref args, ref projName);
+            var g = p.ReferenceItemGroup();
+            if (!args.Any())
+                Tools.FailWith("error: missing parameter.");
+            else
+            {
+                var name = args.First();
+                var i = g.AddNewItem("Reference", name);
+                cond.May(x => i.Condition = x);
+                hint.May(x => i.SetMetadata("HintPath", x));
+            }
+            p.Save(p.FullFileName);
+        }
+    }
 }
 

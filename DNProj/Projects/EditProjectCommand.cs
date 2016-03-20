@@ -64,12 +64,12 @@ namespace DNProj
                     sb.WriteLine();
                     sb.WriteLine("# files:");
                     foreach (var x in p.SourceItemGroup().Cast<BuildItem>())
-                        sb.WriteLine("{0} {1}", x.Name, x.Include);	
+                        sb.WriteLine("{0} {1}", x.Name, x.Include);    
                 });
             var temp = Path.GetTempFileName();
             File.WriteAllText(temp, s);
             var ed = (editor || Shell.GetUnixEnvironmentVariable("EDITOR").Some())
-				.Match(x =>
+                .Match(x =>
                 {
                     if (string.IsNullOrEmpty(x))
                         Tools.FailWith("error: $EDITOR has not been set");
