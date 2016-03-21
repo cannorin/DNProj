@@ -32,6 +32,7 @@ namespace DNProj
             Commands["add-ref"] = new AddRefProjectCommand();
             Commands["rm-ref"] = new RmRefProjectCommand();
             Commands["ls"] = new ListProjectCommand();
+            Commands["ls-ref"] = new ListRefProjectCommand();
             Commands["edit"] = new EditProjectCommand();
             Commands["conf"] = new ConfProjectCommand();
             Commands["item"] = new ItemProjectCommand();

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -32,40 +32,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <LangVersion>6</LangVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Xml" />
-    <Reference Include="Microsoft.Build" />
-    <Reference Include="Microsoft.Build.Engine" />
-    <Reference Include="mscorlib" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="Mono.Options">
-      <HintPath>..\packages\Mono.Options.4.2.2.0\lib\net4\Mono.Options.dll</HintPath>
-    </Reference>
-  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Command.cs" />
-    <Compile Include="Templates.cs" />
-    <Compile Include="Projects\NewProjectCommand.cs" />
-    <Compile Include="Projects\ProjectTools.cs" />
-    <Compile Include="Projects\ProjectCommand.cs" />
-    <Compile Include="Solutions\SolutionCommand.cs" />
-    <Compile Include="Projects\AddProjectCommand.cs" />
-    <Compile Include="Projects\ListProjectCommand.cs" />
-    <Compile Include="Projects\ConfProjectCommand.cs" />
-    <Compile Include="Tools.cs" />
-    <Compile Include="Projects\ItemProjectCommand.cs" />
-    <Compile Include="Projects\RmProjectCommand.cs" />
-    <Compile Include="Projects\EditProjectCommand.cs" />
-    <Compile Include="..\NX\NX.cs">
-      <Link>NX.cs</Link>
-    </Compile>
-    <Compile Include="Projects\AddRefProjectCommand.cs" />
-    <Compile Include="Projects\RmRefProjectCommand.cs" />
-  </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
     <Folder Include="Projects\" />
@@ -82,5 +49,35 @@
   </ProjectExtensions>
   <ItemGroup>
     <None Include="packages.config" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Command.cs" />
+    <Compile Include="Templates.cs" />
+    <Compile Include="Projects\NewProjectCommand.cs" />
+    <Compile Include="Projects\ProjectTools.cs" />
+    <Compile Include="Projects\ProjectCommand.cs" />
+    <Compile Include="Solutions\SolutionCommand.cs" />
+    <Compile Include="Projects\AddProjectCommand.cs" />
+    <Compile Include="Projects\ListProjectCommand.cs" />
+    <Compile Include="Projects\ListRefProjectCommand.cs" />
+    <Compile Include="Projects\ConfProjectCommand.cs" />
+    <Compile Include="Tools.cs" />
+    <Compile Include="Projects\ItemProjectCommand.cs" />
+    <Compile Include="Projects\RmProjectCommand.cs" />
+    <Compile Include="Projects\EditProjectCommand.cs" />
+    <Compile Include="..\NX\NX.cs" />
+    <Compile Include="Projects\AddRefProjectCommand.cs" />
+    <Compile Include="Projects\RmRefProjectCommand.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.Build" />
+    <Reference Include="Microsoft.Build.Engine" />
+    <Reference Include="mscorlib" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Mono.Options">
+      <HintPath>..\packages\Mono.Options.4.2.2.0\lib\net4\Mono.Options.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>
