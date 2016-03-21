@@ -1,3 +1,6 @@
 [submodule "NX"]
 	path = NX
 	url = git@github.com:cannorin/NX.git
+[submodule "nuget"]
+	path = nuget
+	url = git@github.com:alexrp/nuget-unix
