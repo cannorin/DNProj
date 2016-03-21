@@ -1,6 +1,8 @@
+.PHONY: nuget
+
 MONO_PATH?=/usr/bin
-DESTDIR?=/usr/local
-DESTDIR2=$(shell realpath $(DESTDIR))
+PREFIX?=/usr/local
+REAL_PREFIX=$(shell realpath $(PREFIX))
 
 EX_NUGET:=nuget/bin/nuget
 
@@ -10,23 +12,25 @@ GIT?=$(shell which git)
 
 NUGET?=$(EX_NUGET)
 
+dndll:=bin/Release/*
+
 all: binary ;
 
-binary: bin/Release/DNProj.Core.dll ;
+binary: nuget-packages-restore $(dndll) ;
 
-bin/Release/DNProj.Core.dll: nuget-packages-restore 
+$(dndll):
 	$(XBUILD) DNProj.sln /p:Configuration=Release
 
 # External tools
 
 external-tools: nuget ;
 
-nuget: $(NUGET) ;
+nuget: submodule $(NUGET) ;
 
 submodule:
 	$(GIT) submodule update --init --recursive
 
-$(EX_NUGET): submodule
+$(EX_NUGET):
 	cd nuget && $(MAKE)
 
 # NuGet
@@ -38,14 +42,17 @@ nuget-packages-restore: external-tools
 # Install
 
 install: binary 
-	mkdir -p $(DESTDIR2)/lib/dnproj $(DESTDIR2)/bin
-	cp bin/Release/* $(DESTDIR2)/lib/dnproj/
-	echo "#!/bin/sh" > $(DESTDIR2)/bin/dnproj
-	echo "mono $(DESTDIR2)/lib/dnproj/dnproj.exe \$$*" >> $(DESTDIR2)/bin/dnproj
-	chmod +x $(DESTDIR2)/bin/dnproj
-	echo "#!/bin/sh" > $(DESTDIR2)/bin/dnsln
-	echo "mono $(DESTDIR2)/lib/dnproj/dnsln.exe \$$*" >> $(DESTDIR2)/bin/dnsln
-	chmod +x $(DESTDIR2)/bin/dnsln
+	mkdir -p $(REAL_PREFIX)/lib/dnproj $(REAL_PREFIX)/bin
+	cp bin/Release/* $(REAL_PREFIX)/lib/dnproj/
+	echo "#!/bin/sh" > $(REAL_PREFIX)/bin/dnproj
+	echo "mono $(REAL_PREFIX)/lib/dnproj/dnproj.exe \$$*" >> $(REAL_PREFIX)/bin/dnproj
+	chmod +x $(REAL_PREFIX)/bin/dnproj
+	echo "#!/bin/sh" > $(REAL_PREFIX)/bin/dnsln
+	echo "mono $(REAL_PREFIX)/lib/dnproj/dnsln.exe \$$*" >> $(REAL_PREFIX)/bin/dnsln
+	chmod +x $(REAL_PREFIX)/bin/dnsln
+
+uninstall:
+	$(RM) -rf $(REAL_PREFIX)/lib/dnproj/ $(REAL_PREFIX)/bin/dnproj $(REAL_PREFIX)/bin/dnsln
 
 # Clean
 
