@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DNProj", "DNProj\DNProj.csproj", "{0F449402-6DC9-406E-99DF-09D3E09E0186}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DNProj.Proj", "DNProj.Proj\DNProj.Proj.csproj", "{637429D5-4478-4032-867C-05BEB7702A74}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DNProj.Proj", "DNProj.dnproj\DNProj.Proj.csproj", "{637429D5-4478-4032-867C-05BEB7702A74}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DNProj.Sln", "DNProj.Sln\DNProj.Sln.csproj", "{B1E222E6-D119-4379-A88E-5EBC986C5F60}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DNProj.Sln", "DNProj.dnsln\DNProj.Sln.csproj", "{B1E222E6-D119-4379-A88E-5EBC986C5F60}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A1F68E4E-5086-49AA-9787-686BBEC2649B}"
 	ProjectSection(SolutionItems) = preProject
