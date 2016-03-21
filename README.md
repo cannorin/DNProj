@@ -17,13 +17,7 @@ Create a project, add/remove files, install/restore NuGet package.
 
 ``` dnproj add SomeClass.cs ```
 
-``` dnproj rm SomeClass.cs ```
-
 ``` dnproj add-ref System.Numerics ```
-
-``` dnproj rm-ref System.Numerics ```
-
-``` dnproj edit ```
 
 then...
 
@@ -43,7 +37,19 @@ then...
 
 ``` xbuild ```
 
-# LICENSE
+# build and install
+
+DNProj itself requires Mono 3.x or later. 
+
+In order to build DNProj, it requires ```make```, ```git``` and ```curl```.
+
+Just type:
+
+```bash
+PREFIX=/path/to/your/destination make install
+```
+
+# license
 
 ...is GPL v3.
 
