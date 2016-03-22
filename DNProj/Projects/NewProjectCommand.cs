@@ -58,8 +58,11 @@ namespace DNProj
             if (!new []{ "library", "exe", "winexe", "module" }.Contains(type))
                 Tools.FailWith("error: invalid output type '{0}'.", type);
 
-            var f = Templates.GenPath(outputdir, args.First());
-            var name = args.First().Split('.').Rev().Skip(1).Rev().JoinToString(".");
+            var fn = args.First();
+            if (!Path.GetFileName(fn).Contains("."))
+                fn += ".proj";
+            var f = Templates.GenPath(outputdir, fn);
+            var name = Path.GetFileName(fn).Split('.').Rev().Skip(1).Rev().JoinToString();
 
             if (!string.IsNullOrEmpty(outputdir) && !Directory.Exists(outputdir))
                 Directory.CreateDirectory(outputdir);

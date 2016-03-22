@@ -37,7 +37,7 @@ $(EX_NUGET):
 
 nuget-packages-restore: external-tools
 	[ -d packages ] || \
-	    $(NUGET) restore -ConfigFile BetaReductionBot/packages.config -PackagesDirectory packages ; \
+	    $(NUGET) restore DNProj.sln -PackagesDirectory packages ; \
 
 # Install
 
