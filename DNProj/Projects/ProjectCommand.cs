@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 using NX;
+using Mono.Options;
+using System;
 
 namespace DNProj
 {
@@ -36,6 +38,11 @@ namespace DNProj
             Commands["edit"] = new EditProjectCommand();
             Commands["conf"] = new ConfProjectCommand();
             Commands["item"] = new ItemProjectCommand();
+            Options.Add("v|version", "show version.", _ =>
+            {
+                Console.WriteLine("dnproj version {0}\ncopyright (c) cannorin 2016", Tools.Version);
+                Environment.Exit(0);
+            });
         }
     }
 }

@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Mono.Options;
 using NX;
+using System.Reflection;
 
 namespace DNProj
 {
@@ -47,13 +48,21 @@ namespace DNProj
         public static List<string> SafeParse(this OptionSet o, IEnumerable<string> args)
         {
             return o.Try(xs => xs.Parse(args)).MatchEx(x => x, e =>
-                {
-                    e.Match(
-                        xe => Tools.FailWith("error: {0}", e.Value.Message), 
-                        () => Tools.FailWith("error: failed to parse arguments.")
-                    );
-                    return null;
-                });
+            {
+                e.Match(
+                    xe => Tools.FailWith("error: {0}", e.Value.Message), 
+                    () => Tools.FailWith("error: failed to parse arguments.")
+                );
+                return null;
+            });
+        }
+
+        public static string Version
+        {
+            get
+            {
+                return Assembly.GetExecutingAssembly().GetName().Version.ToString();   
+            }
         }
     }
 }

@@ -64,10 +64,10 @@ warning:
                     else if (args.LengthNX() == 0)
                     {
                         var g = gs.Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                            {
-                                Tools.FailWith("error: index out of range.");
-                                return null;
-                            });
+                        {
+                            Tools.FailWith("error: index out of range.");
+                            return null;
+                        });
                         printItemGroup(g, gIndex.Value);
                     } 
                 }, "dnproj item show", "show project itemigurations.", "show project itemigurations.", "[options]");
@@ -77,10 +77,10 @@ warning:
                 {
                     var p = Commands["add"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        });
+                    {
+                        Tools.FailWith("error: index out of range.");
+                        return null;
+                    });
                     if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
                     else
@@ -113,10 +113,10 @@ build actions:
                 {
                     var p = Commands["set-condition"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        }); 
+                    {
+                        Tools.FailWith("error: index out of range.");
+                        return null;
+                    }); 
                     if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
                     else
@@ -125,7 +125,7 @@ build actions:
                         var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
 
                         g.Cast<BuildItem>()
-                         .Try(ys => ys.Find(x => x.Include == name))
+                         .Find(x => x.Include == name)
                          .Match(
                             y => y.Condition = val,
                             () => Tools.FailWith("error: item with name '{0}' doesn't exist.", name)
@@ -140,10 +140,10 @@ build actions:
                 {
                     var p = Commands["set-hintpath"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        }); 
+                    {
+                        Tools.FailWith("error: index out of range.");
+                        return null;
+                    }); 
                     if (!args.Any())
                         Tools.FailWith("error: missing parameter.");
                     else
@@ -152,7 +152,7 @@ build actions:
                         var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
 
                         g.Cast<BuildItem>()
-                            .Try(ys => ys.Find(x => x.Include == name))
+                            .Find(x => x.Include == name)
                             .Match(
                             y =>
                             {
@@ -174,10 +174,10 @@ build actions:
                 {
                     var p = Commands["rm"].LoadProject(ref args, ref projName);
                     var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        }); 
+                    {
+                        Tools.FailWith("error: index out of range.");
+                        return null;
+                    }); 
                     foreach (var s in args)
                         g.Cast<BuildItem>()
                          .Try(xs => xs.First(x => x.Include == s))

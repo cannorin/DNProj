@@ -111,7 +111,7 @@ warning:
                         var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
 
                         g.Cast<BuildProperty>()
-                                .Try(ys => ys.Find(x => x.Name == name))
+                                .Find(x => x.Name == name)
                                 .Match(
                             y => y.Condition = val,
                             () => Tools.FailWith("error: property with name '{0}' doesn't exist.", name)
