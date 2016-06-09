@@ -20,11 +20,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using NX;
 using Microsoft.Build.BuildEngine;
-using System.Xml.Linq;
 
 namespace DNProj
 {
@@ -66,20 +66,37 @@ namespace DNProj
                     foreach (var x in p.SourceItemGroup().Cast<BuildItem>())
                         sb.WriteLine("{0} {1}", x.Name, x.Include);    
                 });
-            var temp = Path.GetTempFileName();
+            var temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".txt");
             File.WriteAllText(temp, s);
-            var ed = (editor || Shell.GetUnixEnvironmentVariable("EDITOR").Some())
-                .Match(x =>
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                var ed = Environment.GetEnvironmentVariable("EDITOR");
+                if (!string.IsNullOrEmpty(ed))
                 {
-                    if (string.IsNullOrEmpty(x))
+                    if (ed[0] == '"' && ed[ed.Length - 1] == '"')
+                        ed = ed.Substring(1, ed.Length - 2);
+                    Shell.Execute(ed, temp);
+                }
+                else
+                {
+                    Process.Start(temp).WaitForExit();
+                }
+            }
+            else
+            {
+                var ed = (editor || Shell.GetUnixEnvironmentVariable("EDITOR").Some())
+                    .Match(x =>
+                    {
+                        if (string.IsNullOrEmpty(x))
+                            Tools.FailWith("error: $EDITOR has not been set");
+                        return x;
+                    }, () =>
+                    {
                         Tools.FailWith("error: $EDITOR has not been set");
-                    return x;
-                }, () =>
-                {
-                    Tools.FailWith("error: $EDITOR has not been set");
-                    return null;
-                });
-            Shell.Execute(ed, temp);
+                        return null;
+                    });
+                Shell.Execute(ed, temp);
+            }
             var s2 = File.ReadAllText(temp);
             File.Delete(temp);
             p.RemoveItemGroup(p.SourceItemGroup());
