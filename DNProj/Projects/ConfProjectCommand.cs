@@ -47,7 +47,7 @@ example:
 warning:
   on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", "show and edit project configurations.", "<command>", "[options]")
         {
-            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
             Options.Add("i=|group-index=", "specify index of property group you want to show or edit. indices are shown as \n'PropertyGroup #<index>'. [default=0]", i => gIndex = Option.Some(int.Parse(i)));
 
             Commands["show"] = new SimpleCommand(
@@ -60,11 +60,9 @@ warning:
                             printPropertyGroup(pg.v, pg.i);
                     else if (args.LengthNX() == 0)
                     {
-                        var g = gs.Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        });
+                        var g = gs.Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                            Report.Fatal("index out of range.")
+                        );
                         printPropertyGroup(g, gIndex.Value);
                     } 
                 }, "dnproj conf show", "show project configurations.", "show project configurations.", "[options]");
@@ -73,13 +71,11 @@ warning:
                 args =>
                 {
                     var p = Commands["set"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    });
+                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                        Report.Fatal("index out of range.")
+                    );
                     if (!args.Any())
-                        Tools.FailWith("error: missing parameter.");
+                        Report.Fatal("missing parameter.");
                     else
                     {
                         var name = args.First();
@@ -98,13 +94,11 @@ warning:
                 args =>
                 {
                     var p = Commands["set-condition"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    }); 
+                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                        Report.Fatal("index out of range.")
+                    ); 
                     if (!args.Any())
-                        Tools.FailWith("error: missing parameter.");
+                        Report.Fatal("missing parameter.");
                     else
                     {
                         var name = args.First();
@@ -114,7 +108,7 @@ warning:
                                 .Find(x => x.Name == name)
                                 .Match(
                             y => y.Condition = val,
-                            () => Tools.FailWith("error: property with name '{0}' doesn't exist.", name)
+                            () => Report.Fatal("property with name '{0}' doesn't exist.", name)
                         );
                         printPropertyGroup(g, Groups(p).IndexOf(g));
                     }
@@ -125,17 +119,15 @@ warning:
                 args =>
                 {
                     var p = Commands["rm"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    }); 
+                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                        Report.Fatal("index out of range.")
+                    ); 
                     foreach (var s in args)
                     {
                         if (g.Cast<BuildProperty>().Any(x => x.Name == s))
                             g.RemoveProperty(s);
                         else
-                            Tools.FailWith("error: property with name '{0}' doesn't exist.", s);
+                            Report.Fatal("property with name '{0}' doesn't exist.", s);
                     }
                     printPropertyGroup(g, Groups(p).IndexOf(g));
                     p.Save(p.FullFileName);
@@ -157,7 +149,7 @@ warning:
                 {
                     var p = Commands["set-group-condition"].LoadProject(ref args, ref projName);
                     if (!args.Any())
-                        Tools.FailWith("error: missing parameter.");
+                        Report.Fatal("missing parameter.");
 
                     var cond = args.JoinToString(" ");
                     gIndex.Map(Groups(p).Nth)
@@ -168,7 +160,7 @@ warning:
                                 g.Condition = cond;
                             p.Save(p.FullFileName); 
                         },
-                        () => Tools.FailWith("error: group index not specified.")
+                        () => Report.Fatal("group index not specified.")
                     );
                 }, "dnproj set-group-condition", "set condition to specified group. -i option is required. \ngiving empty condition will remove condition.", "set condition to group.", "[condition]", "[options]");
 
@@ -184,7 +176,7 @@ warning:
                             p.RemovePropertyGroup(g);
                             p.Save(p.FullFileName); 
                         },
-                        () => Tools.FailWith("error: group index not specified.")
+                        () => Report.Fatal("group index not specified.")
                     );
                 }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
         }

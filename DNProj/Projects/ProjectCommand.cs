@@ -38,11 +38,12 @@ namespace DNProj
             Commands["edit"] = new EditProjectCommand();
             Commands["conf"] = new ConfProjectCommand();
             Commands["item"] = new ItemProjectCommand();
-            Options.Add("v|version", "show version.", _ =>
-            {
-                Console.WriteLine("dnproj version {0}\ncopyright (c) cannorin 2016", Tools.Version);
-                Environment.Exit(0);
-            });
+            Commands["nuget"] = new NugetProjectCommand(); 
+            Commands["version"] = new SimpleCommand(_ =>
+                {
+                    Console.WriteLine("dnproj version {0}\ncopyright (c) cannorin 2016", Tools.Version);
+                    Environment.Exit(0);
+                }, "dnproj version", "show version.", "show version.");
         }
     }
 }

@@ -130,6 +130,14 @@ namespace DNProj
             return p.ItemGroups.Cast<BuildItemGroup>().Filter(xs => !xs.IsImported).SelectMany(xs => xs.Cast<BuildItem>()).Filter(x => x.Name == "Reference");
         }
 
+        public static Option<string> GetAbsoluteHintPath(this BuildItem i)
+        {
+            if (i.HasMetadata("HintPath"))
+                return new Uri(System.IO.Path.GetFullPath(i.GetMetadata("HintPath"))).AbsolutePath.Some();
+            else
+                return Option.None;
+        }
+
         public static Option<Project> GetProject(string defaultName = null)
         {
             return Environment.CurrentDirectory
@@ -143,7 +151,7 @@ namespace DNProj
                 }
                 catch (InvalidProjectFileException e)
                 {
-                    Tools.FailWith("your project file {0} is corrupted. please fix it by yourself.\noriginal error:\n  {1}", x, e.Message);
+                    Report.Fatal("your project file {0} is corrupted. please fix it by yourself.\noriginal error:\n  {1}", x, e.Message);
                 }
                 return p;
             });
@@ -158,12 +166,11 @@ namespace DNProj
                 Environment.Exit(0);
             }
             return GetProject(projName)
-                .DefaultLazy(() =>
+                .AbortNone(() =>
             {
-                Console.WriteLine("error: project file not found.");
+                Report.Error("project file not found.");
                 c.Help(New.Seq(""));
                 Environment.Exit(1);
-                return null;
             });
         }
     }

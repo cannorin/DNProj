@@ -106,7 +106,7 @@ namespace DNProj
                 }
                 else
                 {
-                    Console.WriteLine("command {0} not found.", c);
+                    Report.Error("command {0} not found.", c);
                     Help(rs);
                     Environment.Exit(1);
                 }
@@ -135,7 +135,7 @@ namespace DNProj
 
 {2}
 
-for options, please see parent command's help.", Name, string.Join(" ", Args), Description);
+Please see parent command's help for details.", Name, string.Join(" ", Args), Description);
         }
     }
 }

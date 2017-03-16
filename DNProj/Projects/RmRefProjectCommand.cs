@@ -33,7 +33,7 @@ namespace DNProj
         public RmRefProjectCommand()
             : base("dnproj rm-ref", "remove references from specified project.", "remove references.", "<referencename>+", "[options]")
         {
-            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
         }
 
         public override void Run(IEnumerable<string> args)
@@ -45,7 +45,7 @@ namespace DNProj
                     .Try(xs => xs.First(x => x.Include == s))
                     .Match(
                     g.RemoveItem, 
-                    () => Tools.FailWith("error: reference with name '{0}' doesn't exist.", s)
+                    () => Report.Fatal("reference with name '{0}' doesn't exist.", s)
                 );
             p.Save(p.FullFileName);
         }

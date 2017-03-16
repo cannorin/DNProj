@@ -31,7 +31,7 @@ namespace DNProj
         public ListProjectCommand()
             : base("dnproj ls", "show files in speficied project.", "show files.", "[options]")
         {
-            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
         }
 
         public override void Run(IEnumerable<string> args)

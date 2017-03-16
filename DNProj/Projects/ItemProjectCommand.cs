@@ -50,7 +50,7 @@ example:
 warning:
   on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", "show and edit build items.", "<command>", "[options]")
         {
-            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
             Options.Add("i=|group-index=", "specify index of item group you want to show or edit. indices are shown as \n'ItemGroup #<index>'. [default=0]", i => gIndex = Option.Some(int.Parse(i)));
 
             Commands["show"] = new SimpleCommand(
@@ -63,11 +63,9 @@ warning:
                             printItemGroup(pg.v, pg.i);
                     else if (args.LengthNX() == 0)
                     {
-                        var g = gs.Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                        {
-                            Tools.FailWith("error: index out of range.");
-                            return null;
-                        });
+                    var g = gs.Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                            Report.Fatal("index out of range.")
+                        );
                         printItemGroup(g, gIndex.Value);
                     } 
                 }, "dnproj item show", "show project itemigurations.", "show project itemigurations.", "[options]");
@@ -76,13 +74,11 @@ warning:
                 args =>
                 {
                     var p = Commands["add"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    });
+                var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                        Report.Fatal("index out of range.")
+                    );
                     if (!args.Any())
-                        Tools.FailWith("error: missing parameter.");
+                        Report.Fatal("missing parameter.");
                     else
                         foreach (var f in args)
                         {
@@ -112,13 +108,11 @@ build actions:
                 args =>
                 {
                     var p = Commands["set-condition"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    }); 
+                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                        Report.Fatal("index out of range.")
+                    ); 
                     if (!args.Any())
-                        Tools.FailWith("error: missing parameter.");
+                        Report.Fatal("missing parameter.");
                     else
                     {
                         var name = args.First();
@@ -128,7 +122,7 @@ build actions:
                          .Find(x => x.Include == name)
                          .Match(
                             y => y.Condition = val,
-                            () => Tools.FailWith("error: item with name '{0}' doesn't exist.", name)
+                            () => Report.Fatal("item with name '{0}' doesn't exist.", name)
                         );
                         printItemGroup(g, Groups(p).IndexOf(g));
                     }
@@ -139,13 +133,11 @@ build actions:
                 args =>
                 {
                     var p = Commands["set-hintpath"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    }); 
+                var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                        Report.Fatal("index out of range.")
+                    ); 
                     if (!args.Any())
-                        Tools.FailWith("error: missing parameter.");
+                        Report.Fatal("missing parameter.");
                     else
                     {
                         var name = args.First();
@@ -161,7 +153,7 @@ build actions:
                                 else
                                     y.SetMetadata("HintPath", val);
                             },
-                            () => Tools.FailWith("error: item with name '{0}' doesn't exist.", name)
+                            () => Report.Fatal("item with name '{0}' doesn't exist.", name)
                         );
                         printItemGroup(g, Groups(p).IndexOf(g));
                     }
@@ -173,17 +165,15 @@ build actions:
                 args =>
                 {
                     var p = Commands["rm"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).DefaultLazy(() =>
-                    {
-                        Tools.FailWith("error: index out of range.");
-                        return null;
-                    }); 
+                var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                        Report.Fatal("index out of range.")
+                    ); 
                     foreach (var s in args)
                         g.Cast<BuildItem>()
                          .Try(xs => xs.First(x => x.Include == s))
                          .Match(
                             g.RemoveItem, 
-                            () => Tools.FailWith("error: item with name '{0}' doesn't exist.", s)
+                            () => Report.Fatal("item with name '{0}' doesn't exist.", s)
                         );
                     printItemGroup(g, Groups(p).IndexOf(g));
                     p.Save(p.FullFileName);
@@ -205,7 +195,7 @@ build actions:
                 {
                     var p = Commands["set-group-condition"].LoadProject(ref args, ref projName);
                     if (!args.Any())
-                        Tools.FailWith("error: missing parameter.");
+                        Report.Fatal("missing parameter.");
 
                     var cond = args.JoinToString(" ");
                     gIndex.Map(Groups(p).Nth)
@@ -216,7 +206,7 @@ build actions:
                                 g.Condition = cond;
                             p.Save(p.FullFileName); 
                         },
-                        () => Tools.FailWith("error: group index not specified.")
+                        () => Report.Fatal("group index not specified.")
                     );
                 }, "dnproj set-group-condition", "set condition to specified group. -i option is required. \ngiving empty condition will remove condition.", "set condition to group.", "[condition]", "[options]");
 
@@ -232,17 +222,22 @@ build actions:
                             p.RemoveItemGroup(g);
                             p.Save(p.FullFileName); 
                         },
-                        () => Tools.FailWith("error: group index not specified.")
+                        () => Report.Fatal("group index not specified.")
                     );
                 }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
         }
 
-        IEnumerable<BuildItemGroup> Groups(Project p)
+        internal static void DumpItemGroup(Project p)
+        {
+            Groups(p).IterI(printItemGroup);
+        }
+
+        static IEnumerable<BuildItemGroup> Groups(Project p)
         {
             return p.ItemGroups.Cast<BuildItemGroup>().Filter(x => !x.IsImported);
         }
 
-        void printItemGroup(BuildItemGroup b, int index)
+        static void printItemGroup(BuildItemGroup b, int index)
         {
             Console.Write("ItemGroup #{0}", index);
             if (!string.IsNullOrEmpty(b.Condition))

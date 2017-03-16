@@ -37,6 +37,7 @@
     <Folder Include="Properties\" />
     <Folder Include="Projects\" />
     <Folder Include="Solutions\" />
+    <Folder Include="NuGet\" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
@@ -67,6 +68,13 @@
     <Compile Include="..\NX\NX.cs" />
     <Compile Include="Projects\AddRefProjectCommand.cs" />
     <Compile Include="Projects\RmRefProjectCommand.cs" />
+    <Compile Include="Projects\NugetProjectCommand.cs" />
+    <Compile Include="NuGet\NuGetSearchCommand.cs" />
+    <Compile Include="NuGet\NuGetInstallCommand.cs" />
+    <Compile Include="NuGet\NuGetTools.cs" />
+    <Compile Include="NuGet\NuGetRemoveCommand.cs" />
+    <Compile Include="NuGet\NuGetListCommand.cs" />
+    <Compile Include="NuGet\NuGetUpdateCommand.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -77,7 +85,23 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Mono.Options">
-      <HintPath>..\packages\Mono.Options.4.2.2.0\lib\net4\Mono.Options.dll</HintPath>
+      <HintPath>..\packages\Mono.Options.4.4.0.0\lib\net4-client\Mono.Options.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.IdentityModel" />
+    <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="Microsoft.Web.XmlTransform">
+      <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
+    </Reference>
+    <Reference Include="NuGet.Core">
+      <HintPath>..\packages\NuGet.Core.2.14.0\lib\net40-Client\NuGet.Core.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>

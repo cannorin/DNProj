@@ -33,6 +33,7 @@ namespace DNProj
         string temp = "none";
         string type = "exe";
         string arch = "AnyCPU";
+        string fw = "v4.5";
 
         public NewProjectCommand()
             : base("dnproj new", 
@@ -43,6 +44,7 @@ namespace DNProj
             Options.Add("t=|template=", "specify language template. \n(none|csharp|fsharp) [default=none]", x => temp = x);
             Options.Add("o=|output-type=", "specify output type. \n(library|exe|winexe|module) [default=exe]", x => type = x);
             Options.Add("p=|platform=", "specify platform target. \n(AnyCPU|x86|x64) [default=AnyCPU]", x => arch = x);
+            Options.Add("f=|target-framework=", "specify target framework. \n[default=v4.5]", x => fw = x);
         }
 
         public override void Run(IEnumerable<string> args)
@@ -54,9 +56,9 @@ namespace DNProj
                 return;
             }
             if (!(temp == "csharp" || temp == "fsharp" || temp == "none"))
-                Tools.FailWith("error: invalid language template '{0}'.", temp);
+                Report.Fatal("invalid language template '{0}'.", temp);
             if (!new []{ "library", "exe", "winexe", "module" }.Contains(type))
-                Tools.FailWith("error: invalid output type '{0}'.", type);
+                Report.Fatal("invalid output type '{0}'.", type);
 
             var fn = args.First();
             if (!Path.GetFileName(fn).Contains("."))
@@ -84,6 +86,7 @@ namespace DNProj
             assemblyProperty.AddNewProperty("OutputType", type.Substring(0, 1).ToUpper() + type.Substring(1));
             assemblyProperty.AddNewProperty("RootNamespace", name);
             assemblyProperty.AddNewProperty("AssemblyName", name);
+            assemblyProperty.AddNewProperty("TargetFrameworkVersion", fw);
 
             // add properties for each configurations
             var gs = ProjectTools.AddDefaultConfigurations(p, arch);

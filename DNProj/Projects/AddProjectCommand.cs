@@ -43,7 +43,7 @@ example:
   $ dnproj add A.cs B.png:EmbeddedResource C.txt:None", 
                    "add files.", "<filename[:buildaction]>+", "[options]")
         {
-            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
         }
 
         public override void Run(IEnumerable<string> args)

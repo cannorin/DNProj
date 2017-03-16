@@ -45,9 +45,9 @@ warning:
   on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", 
                    "add references.", "<referencename>", "[options]")
         {
-            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
             Options.Add("c=|cond=", "specify condition.", c => cond = c.Some());
-            Options.Add("h=|hint=", "specify hint path.", h => hint = h.Some());
+            Options.Add("hint=", "specify hint path.", h => hint = h.Some());
         }
 
         public override void Run(IEnumerable<string> args)
@@ -55,7 +55,7 @@ warning:
             var p = this.LoadProject(ref args, ref projName);
             var g = p.ReferenceItemGroup();
             if (!args.Any())
-                Tools.FailWith("error: missing parameter.");
+                Report.Fatal("missing parameter.");
             else
             {
                 var name = args.First();

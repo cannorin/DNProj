@@ -20,35 +20,36 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using NX;
+using System.Diagnostics;
+using Mono.Options;
 using Microsoft.Build.BuildEngine;
+using NuGet;
 
 namespace DNProj
 {
-    public class RmProjectCommand : Command
+    public class NugetProjectCommand : Command
     {
-        string projName;
+        public NugetProjectCommand()
+            : base("dnproj nuget", 
+                   @"add or remove NuGet packages to/from specified project.
+only the v2 API is supported (currently).
 
-        public RmProjectCommand()
-            : base("dnproj rm", "remove files from specified project.", "remove files.", "<filename>+", "[options]")
+example:
+  $ dnproj nuget search EntityFramework
+  $ dnproj nuget install EntityFramework:5.0.0 --output-dir ../packages 
+  $ dnproj nuget remove EntityFramework",
+                   "manage NuGet packages.", "<command>", "[options]")
         {
-            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
-        }
-
-        public override void Run(IEnumerable<string> args)
-        {
-            var p = this.LoadProject(ref args, ref projName);
-            var g = p.SourceItemGroup();
-            foreach (var s in args)
-                g.Cast<BuildItem>()
-                    .Try(xs => xs.First(x => x.Include == s))
-                    .Match(
-                    g.RemoveItem, 
-                    () => Report.Fatal("item with name '{0}' doesn't exist.", s)
-                );
-            p.Save(p.FullFileName);
+            Commands["search"] = new NuGetSearchCommand("dnproj nuget search");
+            Commands["install"] = new NuGetInstallCommand();
+            Commands["remove"] = new NuGetRemoveCommand();
+            Commands["update"] = new NuGetUpdateCommand("dnproj nuget update");
+            Commands["ls"] = new NuGetListCommand();
         }
     }
+
 }
 

@@ -36,7 +36,7 @@ namespace DNProj
         public EditProjectCommand()
             : base("dnproj edit", "edit files and references with $EDITOR.\nyou can add, remove, and reorder multiple items at once.", "edit files and references with editor.", "[options]")
         {
-            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
             Options.Add("e=|editor=", "specify editor.", e => editor = e.Some());
         }
 
@@ -88,11 +88,11 @@ namespace DNProj
                     .Match(x =>
                     {
                         if (string.IsNullOrEmpty(x))
-                            Tools.FailWith("error: $EDITOR has not been set");
+                            Report.Fatal("$EDITOR has not been set");
                         return x;
                     }, () =>
                     {
-                        Tools.FailWith("error: $EDITOR has not been set");
+                        Report.Fatal("$EDITOR has not been set");
                         return null;
                     });
                 Shell.Execute(ed, temp);
@@ -117,7 +117,7 @@ namespace DNProj
                 {
                 }
                 else if (xs.Length < 2)
-                    Tools.FailWith("error: invalid line '{0}'.", t);
+                    Report.Fatal("invalid line '{0}'.", t);
                 else
                 {
                     if (Templates.BuildItems.Contains(xs[0]))
@@ -149,7 +149,7 @@ namespace DNProj
                         }
                     }
                     else
-                        Tools.FailWith("error: invalid line '{0}'.", t);
+                        Report.Fatal("invalid line '{0}'.", t);
                 }
                 t = "";
             }

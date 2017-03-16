@@ -27,6 +27,61 @@ using System.Reflection;
 
 namespace DNProj
 {
+    public static class Report
+    {
+        public static void Error(string s, params object[] args)
+        {
+            ConsoleNX.ColoredWriteLine("error: " + s, ConsoleColor.Red, args);
+        }
+
+        public static void Error(int indent, string s, params object[] args)
+        {
+            Seq.Repeat(' ', indent).Iter(Console.Write);
+            Error(s, args);
+        }
+
+        public static void Warning(string s, params object[] args)
+        {
+            ConsoleNX.ColoredWriteLine("warning: " + s, ConsoleColor.Yellow, args);
+        }
+
+        public static void Warning(int indent, string s, params object[] args)
+        {
+            Seq.Repeat(' ', indent).Iter(Console.Write);
+            Warning(s, args);
+        }
+
+        public static void Info(string s, params object[] args)
+        {
+            ConsoleNX.ColoredWriteLine("info: " + s, ConsoleColor.Blue, args);
+        }
+
+        public static void Info(int indent, string s, params object[] args)
+        {
+            Seq.Repeat(' ', indent).Iter(Console.Write);
+            Info(s, args);
+        }
+
+        public static void WriteLine(string s, params object[] args)
+        {
+            Console.WriteLine(s, args);
+        }
+
+        public static void WriteLine(int indent, string s, params object[] args)
+        {
+            Seq.Repeat(' ', indent).Iter(Console.Write);
+            Report.WriteLine(s, args);
+        }
+
+        public static void Fatal(string s, params object[] args)
+        {
+            ConsoleNX.ColoredWriteLine("fatal: " + s, ConsoleColor.Red, args);
+            Environment.Exit(1);
+        }
+
+
+    }
+
     public static class Tools
     {
         public static bool WeakEquals(this string s, string t)
@@ -45,13 +100,23 @@ namespace DNProj
             Environment.Exit(1);
         }
 
+        public static void WriteLine(this string s, System.IO.TextWriter writer)
+        {
+            writer.WriteLine(s);
+        }
+
+        public static void WriteLine(this string s)
+        {
+            s.WriteLine(Console.Out);
+        }
+
         public static List<string> SafeParse(this OptionSet o, IEnumerable<string> args)
         {
             return o.Try(xs => xs.Parse(args)).MatchEx(x => x, e =>
             {
                 e.Match(
-                    xe => Tools.FailWith("error: {0}", e.Value.Message), 
-                    () => Tools.FailWith("error: failed to parse arguments.")
+                    xe => Report.Fatal("{0}", e.Value.Message), 
+                    () => Report.Fatal("failed to parse arguments.")
                 );
                 return null;
             });

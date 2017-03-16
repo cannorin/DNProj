@@ -31,7 +31,7 @@ namespace DNProj
         public ListRefProjectCommand()
             : base("dnproj ls-ref", "show references in speficied project.", "show references.", "[options]")
         {
-            Options.Add("p=|proj=", "specify project file, not in the current directory.", p => projName = p);
+            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
         }
 
         public override void Run(IEnumerable<string> args)
