@@ -31,7 +31,7 @@ namespace DNProj
 {
     public class SolutionCommand : Command
     {
-        string projName;
+        //string projName;
 
         public SolutionCommand()
             : base("dnsln", "not implemented.", "")

@@ -34,10 +34,12 @@ namespace DNProj
         public ItemProjectCommand()
             : base("dnproj item", 
                    @"show and edit build items.
-in most cases, you can use 'dnproj add', 'dnproj add-ref', 'dnproj rm', and 'dnproj rm-ref' instead.
+in most cases, you can use 'dnproj add', 'dnproj add-ref', 'dnproj rm', and 'dnproj rm-ref' instead.", "show and edit build items.", "<command>", "[options]")
+        {
+            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
+            Options.Add("i=|group-index=", "specify index of item group you want to show or edit. indices are shown as \n'ItemGroup #<index>'. [default=0]", i => gIndex = Option.Some(int.Parse(i)));
 
-example:
-  $ dnproj item show
+            @"  $ dnproj item show
   $ dnproj item add -i 1 A.cs B.png:EmbeddedResource C.txt:None
   $ dnproj item add System.Core:Reference
   $ dnproj item set-condition -i 1 A.cs "" '\$(Platform)' == 'AnyCPU' ""
@@ -45,13 +47,10 @@ example:
   $ dnproj item rm -i 1 B.png
   $ dnproj item add-group
   $ dnprij item set-group-condition -i 2 "" \$(MyCondition) == 'true' ""
-  $ dnproj item rm-group -i 2
+  $ dnproj item rm-group -i 2"
+                .Split('\n').Iter(this.AddExample);
 
-warning:
-  on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", "show and edit build items.", "<command>", "[options]")
-        {
-            Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
-            Options.Add("i=|group-index=", "specify index of item group you want to show or edit. indices are shown as \n'ItemGroup #<index>'. [default=0]", i => gIndex = Option.Some(int.Parse(i)));
+            this.AddWarning("you must escape the dollar sign '$' inside \"\" as \"\\$\", or use '' instead.");
 
             Commands["show"] = new SimpleCommand(
                 args =>

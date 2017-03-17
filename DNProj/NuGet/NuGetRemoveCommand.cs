@@ -43,16 +43,16 @@ namespace DNProj
 
         public NuGetRemoveCommand()
             : base("dnproj nuget remove",
-                   @"remove NuGet packages from project.
-
-examples:
-  $ dnproj nuget remove EntityFramework", "remove NuGet packages.", "<name>+", "[options]")
+                   @"remove NuGet packages from project.", "remove NuGet packages.", "<name>+", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", s => projName = s);
             Options.Add("f|force", "force remove packages although unresolved dependencies still exist.", _ => force = _ != null);
             Options.Add("r|recursive", "remove packages' dependencies too.", _ => recursive = _ != null);
             Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s.Some());
             Options.Add("v|verbose", "show detailed log.", _ => verbose = _ != null);
+
+            this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
+            this.AddExample("$ dnproj nuget remove EntityFramework");
         }
 
         public override void Run(IEnumerable<string> args)
@@ -63,6 +63,9 @@ examples:
                 // find packages.config
                 var conf = new PackageReferenceFile(config.Map(Path.GetFullPath)
                     .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config")));
+
+                if(!File.Exists(conf.FullPath))
+                    Report.Fatal("'{0}' does not exist.", conf);
 
                 // find packages/
                 var path = proj.ReferenceItems()

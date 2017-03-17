@@ -35,19 +35,20 @@ namespace DNProj
         public NugetProjectCommand()
             : base("dnproj nuget", 
                    @"add or remove NuGet packages to/from specified project.
-only the v2 API is supported (currently).
-
-example:
-  $ dnproj nuget search EntityFramework
-  $ dnproj nuget install EntityFramework:5.0.0 --output-dir ../packages 
-  $ dnproj nuget remove EntityFramework",
+only the v2 API is supported (currently).",
                    "manage NuGet packages.", "<command>", "[options]")
         {
             Commands["search"] = new NuGetSearchCommand("dnproj nuget search");
             Commands["install"] = new NuGetInstallCommand();
             Commands["remove"] = new NuGetRemoveCommand();
             Commands["update"] = new NuGetUpdateCommand("dnproj nuget update");
+            Commands["restore"] = new NuGetRestoreCommand("dnproj nuget restore");
             Commands["ls"] = new NuGetListCommand();
+
+            @"  $ dnproj nuget search EntityFramework
+  $ dnproj nuget install EntityFramework:5.0.0 --output-dir ../packages 
+  $ dnproj nuget remove EntityFramework"
+                .Split('\n').Iter(this.AddExample);
         }
     }
 

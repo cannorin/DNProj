@@ -33,22 +33,21 @@ namespace DNProj
 
         public ConfProjectCommand()
             : base("dnproj conf", 
-                   @"show and edit project configurations.
-
-example:
-  $ dnproj conf show
-  $ dnproj conf set -i 1 OutputPath bin/Debug
-  $ dnproj conf set-condition Platform "" '\$(Platform)' == '' ""
-  $ dnproj conf rm OutputPath -i 1
-  $ dnproj conf add-group
-  $ dnprij conf set-group-condition -i 2 "" \$(MyCondition) == 'true' ""
-  $ dnproj conf rm-group -i 2
-
-warning:
-  on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", "show and edit project configurations.", "<command>", "[options]")
+                   @"show and edit project configurations.", "show and edit project configurations.", "<command>", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
             Options.Add("i=|group-index=", "specify index of property group you want to show or edit. indices are shown as \n'PropertyGroup #<index>'. [default=0]", i => gIndex = Option.Some(int.Parse(i)));
+
+            @"$ dnproj conf show
+$ dnproj conf set -i 1 OutputPath bin/Debug
+$ dnproj conf set-condition Platform "" '\$(Platform)' == '' ""
+$ dnproj conf rm OutputPath -i 1
+$ dnproj conf add-group
+$ dnprij conf set-group-condition -i 2 "" \$(MyCondition) == 'true' ""
+$ dnproj conf rm-group -i 2"
+                .Split('\n').Iter(this.AddExample);
+
+            this.AddWarning("you must escape the dollar sign '$' inside \"\" as \"\\$\", or use '' instead.");
 
             Commands["show"] = new SimpleCommand(
                 args =>

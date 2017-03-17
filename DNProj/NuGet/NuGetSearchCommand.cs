@@ -39,7 +39,7 @@ namespace DNProj
         string sourceUrl = "https://packages.nuget.org/api/v2";
 
         public NuGetSearchCommand(string name)
-            : base(name, "search NuGet packages.", "search NuGet packages.", "[name]")
+            : base(name, "search NuGet packages from the official NuGet repository.", "search NuGet packages.", "[name]")
         {
             Options.Add("c=|count=", "show top N results. [default=10]", s => count = s.Try(int.Parse));
             Options.Add("custom-source=", "use custom NuGet source. only the NuGet v2 endpoint can be used.", p => sourceUrl = p);

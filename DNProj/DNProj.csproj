@@ -51,7 +51,6 @@
   <ItemGroup>
     <None Include="packages.config" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Command.cs" />
     <Compile Include="Templates.cs" />
     <Compile Include="Projects\NewProjectCommand.cs" />
     <Compile Include="Projects\ProjectTools.cs" />
@@ -75,6 +74,8 @@
     <Compile Include="NuGet\NuGetRemoveCommand.cs" />
     <Compile Include="NuGet\NuGetListCommand.cs" />
     <Compile Include="NuGet\NuGetUpdateCommand.cs" />
+    <Compile Include="NuGet\NuGetRestoreCommand.cs" />
+    <Compile Include="Command.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

@@ -76,6 +76,28 @@ namespace DNProj
                 }
                 Console.WriteLine("  help                       show this.");
             }
+
+            var exams = this.GetExamples();
+            if (exams.Any())
+            {
+                Console.WriteLine("\nexample:");
+                Console.WriteLine(exams.JoinToString("\n"));
+            }
+
+            var tips = this.GetTips();
+            if (tips.Any())
+            {
+                Console.WriteLine("\ntips:");
+                Console.WriteLine(tips.JoinToString("\n"));
+            }
+
+            var warns = this.GetWarnings();
+            if (warns.Any())
+            {
+                Console.WriteLine("\nwarning:");
+                Console.WriteLine(warns.JoinToString("\n"));
+            }
+
             Console.WriteLine("\noptions:");
             Options.WriteOptionDescriptions(Console.Out);
             Console.WriteLine("  -h, -?, --help             show this.");
@@ -92,7 +114,7 @@ namespace DNProj
                 Help(rs);
             else
             {
-                var c = rs.Hd();
+                var c = rs.First();
 
                 if (Commands.ContainsKey(c))
                     Commands[c].Run(rs.Skip(1));
@@ -111,6 +133,112 @@ namespace DNProj
                     Environment.Exit(1);
                 }
             }
+        }
+    }
+
+    public static class CommandHelpParts
+    {
+        public static Dictionary<string, List<string>> Tips { get; set; }
+        public static Dictionary<string, List<string>> Warnings { get; set; }
+        public static Dictionary<string, List<string>> Examples { get; set; }
+
+        public static Tuple<string, string, string> GetRandom()
+        {
+            if (Tips == null)
+                Tips = new Dictionary<string, List<string>>();
+            if (Warnings == null)
+                Warnings = new Dictionary<string, List<string>>();
+            if (Examples == null)
+                Examples = new Dictionary<string, List<string>>();
+            
+            var tips = 
+                Tips.Map(x => x.Value.Map(y => Tuple.Create("tips", x.Key, y)));
+            var warns = 
+                Warnings.Map(x => x.Value.Map(y => Tuple.Create("warning", x.Key, y)));
+            var exams = 
+                Examples.Map(x => x.Value.Map(y => Tuple.Create("example", x.Key, y)));
+
+            var all = tips.Append(warns).Append(exams).Flatten().ToArray();
+
+            return all[new Random().Next(0, all.Count())];
+        }
+
+        public static void AddTips(this Command c, string hint)
+        {
+            if (Tips == null)
+                Tips = new Dictionary<string, List<string>>();
+            if (!Tips.ContainsKey(c.Name))
+                Tips[c.Name] = new List<string>();
+            var h = hint.Split('\n')
+                .Map(s => {
+                    if(!s.StartsWith(" "))
+                        return "  " + s;
+                    else return s;
+                })
+                .JoinToString("\n");
+
+            Tips[c.Name].Add(h);
+        }
+
+        public static List<string> GetTips(this Command c)
+        {
+            if (Tips == null)
+                Tips = new Dictionary<string, List<string>>();
+            if (!Tips.ContainsKey(c.Name))
+                Tips[c.Name] = new List<string>();    
+            return Tips[c.Name];
+        }
+
+        public static void AddWarning(this Command c, string warn)
+        {
+            if (Warnings == null)
+                Warnings = new Dictionary<string, List<string>>();
+            if (!Warnings.ContainsKey(c.Name))
+                Warnings[c.Name] = new List<string>();
+            var h = warn.Split('\n')
+                .Map(s => {
+                    if(!s.StartsWith(" "))
+                        return "  " + s;
+                    else return s;
+                })
+                .JoinToString("\n");
+
+            Warnings[c.Name].Add(h);
+        }
+
+        public static List<string> GetWarnings(this Command c)
+        {
+            if (Warnings == null)
+                Warnings = new Dictionary<string, List<string>>();
+            if (!Warnings.ContainsKey(c.Name))
+                Warnings[c.Name] = new List<string>();    
+            return Warnings[c.Name];
+        }
+
+        public static void AddExample(this Command c, string exam)
+        {
+            if (Examples == null)
+                Examples = new Dictionary<string, List<string>>();
+            if (!Examples.ContainsKey(c.Name))
+                Examples[c.Name] = new List<string>();
+            var h = exam.Split('\n')
+                .Map(s => {
+                    if(!s.StartsWith(" "))
+                        return "  " + s;
+                    else return s;
+                })
+                .JoinToString("\n");
+
+            Examples[c.Name].Add(h);
+        }
+
+        public static List<string> GetExamples(this Command c)
+        {
+            if (Examples == null)
+                Examples = new Dictionary<string, List<string>>();
+            if (!Examples.ContainsKey(c.Name))
+                Examples[c.Name] = new List<string>();    
+            return Examples[c.Name];
         }
     }
 

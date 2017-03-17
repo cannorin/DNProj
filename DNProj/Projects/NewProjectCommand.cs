@@ -37,7 +37,7 @@ namespace DNProj
 
         public NewProjectCommand()
             : base("dnproj new", 
-                   "create new project.\n\nexample:\n  $ dnproj new ConsoleApplication1.csproj -d ConsoleApplication1 -t csharp", 
+                   "create new project.", 
                    "create new project.", "<filename>", "[options]")
         {
             Options.Add("d=|output-dir=", "specify output directory. \n[default=<current directory>]", x => outputdir = x);
@@ -45,6 +45,8 @@ namespace DNProj
             Options.Add("o=|output-type=", "specify output type. \n(library|exe|winexe|module) [default=exe]", x => type = x);
             Options.Add("p=|platform=", "specify platform target. \n(AnyCPU|x86|x64) [default=AnyCPU]", x => arch = x);
             Options.Add("f=|target-framework=", "specify target framework. \n[default=v4.5]", x => fw = x);
+
+            this.AddExample("$ dnproj new ConsoleApplication1.csproj -d ConsoleApplication1 -t csharp");
         }
 
         public override void Run(IEnumerable<string> args)

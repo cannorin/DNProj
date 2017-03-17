@@ -41,19 +41,23 @@ namespace DNProj
         bool verbose = false;
         bool allow40 = false;
         bool recursive = false;
+        bool allowPre = false;
 
         public NuGetUpdateCommand(string name)
             : base(name,
-                   @"update NuGet packages.
-                
-if no package names are specified, it will (try to) update all the installed packages", "update NuGet packages.", "[name]*", "[options]")
+                            @"update NuGet packages.
+
+if no package names are specified, it will try to) update all the installed packages.", "update NuGet packages.", "[name]*", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", s => projName = s);
             Options.Add("custom-source=", "use custom NuGet source. only the NuGet v2 endpoint can be used.", p => sourceUrl = p);
             Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s.Some());
             Options.Add("r|recursive", "update packages' dependencies too.", _ => recursive = _ != null);
-            Options.Add("a|allow-downgrade-framework", "try installing .NET 4.0 version if the package doesn't support .NET 4.5.", _ => allow40 = _ != null);
+            Options.Add("a|allow-prerelease", "use the pre release version of packages, if available.", _ => allowPre = _ != null);
+            Options.Add("d|allow-downgrade-framework", "try installing .NET 4.0 version if the package doesn't support .NET 4.5.", _ => allow40 = _ != null);
             Options.Add("v|verbose", "show detailed log.", _ => verbose = _ != null);
+
+            this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
         }
 
         public override void Run(IEnumerable<string> args)
@@ -66,13 +70,17 @@ if no package names are specified, it will (try to) update all the installed pac
 
                 var conf = new PackageReferenceFile(config.Map(Path.GetFullPath)
                     .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config")));
+
+                if(!File.Exists(conf.FullPath))
+                    Report.Fatal("'{0}' does not exist.", conf);
+                
                 var path = proj.ReferenceItems()
-                    .Map(ProjectTools.GetAbsoluteHintPath)
-                    .FindSome()
+                    .Choose(ProjectTools.GetAbsoluteHintPath)
+                    .Head()
                     .Map(x => Path.GetDirectoryName(x).Unfold(s => Tuple.Create(Directory.GetParent(s), Directory.GetParent(s).FullName)).Nth(2))
                     .Map(x => x.FullName).AbortNone(() =>
                         Report.Fatal("there are no installed packages.")
-                           );
+                                       );
 
                 // read proj to get fn
                 var apg = proj.AssemblyPropertyGroup().Cast<BuildProperty>();
@@ -94,81 +102,90 @@ if no package names are specified, it will (try to) update all the installed pac
                 // prepare nuget things
                 var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
                 var localrepo = new LocalPackageRepository(path);
-                var pm = new PackageManager(repo, path);
-                var logger = new NuGetLogger(2, !verbose);
-                pm.Logger = logger;
+                var pm = new DNPackageManager(repo, path);
                 pm.DependencyVersion = DependencyVersion.Lowest;
                 pm.SkipPackageTargetCheck = true;
-                pm.PackageUninstalling += (sender, e) =>
+                pm.Logger.IsSilent = !verbose;
+
+                pm.PackageUninstalling += (sender, e) => 
                 {
-                    e.Package.AssemblyReferences
-                        .OrderByDescending(x => x.TargetFramework.Version.Major * 1000 + x.TargetFramework.Version.Minor)
-                        .Find(x => x.SupportedFrameworks.Contains(fn) || (allow40 && x.TargetFramework.Identifier == fn.Identifier && x.TargetFramework.Version.Major == fn.Version.Major))
-                        .Match(
-                            a =>
-                            {
-                                conf.DeleteEntry(e.Package.Id, e.Package.Version);
-                            }, 
-                            () => 
-                            {
-                                Report.Warning(logger.Indents, "newer version of '{0}' doesn't support framework '{1}', cancelling...", e.Package.Id, fn);
-                                e.Cancel = true;
-                            }
-                        );
+                    var i = e.Package.GetFullName().Replace(' ', '.');
+                    e.Package.ExtractContents(new PhysicalFileSystem(path), i + ".backup");
+                    File.Copy(Path.Combine(Path.Combine(path, i), i + ".nupkg"), Path.Combine(Path.Combine(path, i + ".backup"), i + ".nupkg")); 
                 };
 
                 pm.PackageInstalling += (sender, e) =>
                 {
-                    e.Package.AssemblyReferences
-                        .OrderByDescending(x => x.TargetFramework.Version.Major * 1000 + x.TargetFramework.Version.Minor)
-                        .Find(x => x.SupportedFrameworks.Contains(fn) || (x.TargetFramework.Identifier == fn.Identifier && x.TargetFramework.Version.Major == fn.Version.Major))
-                        .Match(
-                            a => 
-                            {
-                                if(!allow40)
-                                {
-                                    Report.Info(logger.Indents, "'--allow-downgrade-framework' to update to '{0}', which supports '{1}'.", e.Package.Version, a.TargetFramework);
-                                    e.Cancel = true;
-                                }
-                            }, 
-                            () => 
-                            {
-                                e.Cancel = true;
-                            }
-                        );
+                    var alt = e.Package.FindAlternativeFramework(fn);
+                    if(!e.Package.GetSupportedFrameworks().Contains(fn) && !(allow40 && alt.HasValue))
+                    {
+                        Report.Error(pm.Logger.Indents, "newer version of '{0}' doesn't support framework '{1}', cancelling...", e.Package.Id, fn);
+
+                        if (alt.HasValue)
+                            Report.Info(pm.Logger.Indents, "use '--allow-downgrade-framework' to update to version '{0}', which supports '{1}'.", e.Package.Version, alt.Value);
+                        e.Cancel = true;
+                    }
                 };
 
                 pm.PackageInstalled += (sender, e) =>
                 {
                     var pn = e.Package.GetFullName().Replace(' ', '.');
                     var bp = new Uri(proj.FullFileName);
+                    var alt = e.Package.FindAlternativeFramework(fn);
                     e.Package.AssemblyReferences
                         .OrderByDescending(x => x.TargetFramework.Version.Major * 1000 + x.TargetFramework.Version.Minor)
-                        .Find(x => x.SupportedFrameworks.Contains(fn) || (allow40 && x.TargetFramework.Identifier == fn.Identifier && x.TargetFramework.Version.Major == fn.Version.Major))
-                        .Match(
-                            a =>
-                            {
+                        .Find(x => x.SupportedFrameworks.Contains(fn) || (allow40 && alt.Map(x.SupportedFrameworks.Contains).Default(false)))
+                        .Match(a =>
+                        {
+                            conf.GetPackageReferences()
+                                .Find(x => x.Id == e.Package.Id)
+                                .May(old =>
+                                {
+                                    var back = Path.Combine(path, old.Id + "." + old.Version + ".backup");
+                                    Directory.Delete(back, true);
+                                    conf.DeleteEntry(old.Id, old.Version);
+                                });
+                            if(a.SupportedFrameworks.Contains(fn))
                                 conf.AddEntry(e.Package.Id, e.Package.Version, false, fn);
-                                var absp = new Uri(Path.Combine(path, Path.Combine(pn, a.Path)));
-                                var rp = bp.MakeRelativeUri(absp).ToString();
-                                var an = Assembly.LoadFile(absp.AbsolutePath).GetName().Name;
-                                proj.ReferenceItems()
-                                    .Filter(x => x.HasMetadata("HintPath"))
-                                    .Find(x => x.Include == an)
-                                    .Match(
-                                        i =>
-                                        {
-                                            if(verbose)
-                                                Report.WriteLine(logger.Indents, "Replacing existing reference to '{0}, HelpPath={1}' with '{2}, HelpPath={3}'...", i.Include, i.GetMetadata("HintPath"), an, rp);
-                                            proj.ReferenceItemGroup().RemoveItem(i);
-                                            var j = proj.ReferenceItemGroup().AddNewItem("Reference", an);
-                                            j.SetMetadata("HintPath", rp);
-                                        },
-                                        () => {}
+                            else
+                                conf.AddEntry(e.Package.Id, e.Package.Version, false, alt.Value);
+                            var absp = new Uri(Path.Combine(path, Path.Combine(pn, a.Path)));
+                            var rp = bp.MakeRelativeUri(absp).ToString();
+                            var an = Assembly.LoadFile(absp.AbsolutePath).GetName().Name;
+                            proj.ReferenceItems()
+                                .Filter(x => x.HasMetadata("HintPath"))
+                                .Find(x => x.Include == an)
+                                .Match(
+                                    i =>
+                                    {
+                                        if (verbose)
+                                            Report.WriteLine(pm.Logger.Indents, "Replacing existing reference to '{0}, HelpPath={1}'.", an, rp);
+                                        proj.ReferenceItemGroup().RemoveItem(i);
+                                        
+                                    },
+                                    () =>
+                                    {
+                                        if(verbose)
+                                            Report.WriteLine(pm.Logger.Indents, "Adding a new reference to '{0}'.", an);    
+                                    }
                                 );
-                            }, 
-                            () => {}
-                        );
+                            var j = proj.ReferenceItemGroup().AddNewItem("Reference", an);
+                            j.SetMetadata("HintPath", rp);
+                        },
+                        () => 
+                        {
+                            var lpm = new PackageManager(localrepo, path);
+                            lpm.UninstallPackage(e.Package, true);
+                            conf.GetPackageReferences()
+                                .Find(x => x.Id == e.Package.Id)
+                                .May(old =>
+                                {
+                                    if(verbose)
+                                        Report.WriteLine(pm.Logger.Indents, "Restoring previous version of '{0}'.", old.Id);
+                                    var back = Path.Combine(path, old.Id + "." + old.Version);
+                                    Directory.Move(back + ".backup", back);
+                                });
+                        });
                 };
 
                 // update
@@ -182,19 +199,19 @@ if no package names are specified, it will (try to) update all the installed pac
                             break;
                         }
                         Console.WriteLine("* updating '{0}'...", name);
-                        pm.UpdatePackage(name, false, false);
+                        pm.UpdatePackage(name, false, allowPre);
 
-                        if(recursive)
+                        if (recursive)
                         {
                             var p = localrepo.FindPackage(name);
                             var pkgs = NuGetTools.ResolveDependencies(p, fn, repo);
-                            logger.Indents += 2;
-                            foreach(var pkg in pkgs)
+                            pm.Logger.Indents += 2;
+                            foreach (var pkg in pkgs)
                             {
                                 Console.WriteLine("  * updating depending package '{0}'...", pkg.GetFullName());
-                                pm.UpdatePackage(pkg.Id, false, false);
+                                pm.UpdatePackage(pkg.Id, false, allowPre);
                             }
-                            logger.Indents -= 2;
+                            pm.Logger.Indents -= 2;
                         }
                     }
                 }
@@ -203,18 +220,18 @@ if no package names are specified, it will (try to) update all the installed pac
                     foreach (var pr in conf.GetPackageReferences())
                     {
                         Console.WriteLine("* updating '{0}'...", pr.Id);
-                        pm.UpdatePackage(pr.Id, false, false);
-                        if(recursive)
+                        pm.UpdatePackage(pr.Id, false, allowPre);
+                        if (recursive)
                         {
                             var p = localrepo.FindPackage(pr.Id);
                             var pkgs = NuGetTools.ResolveDependencies(p, fn, repo);
-                            logger.Indents += 2;
-                            foreach(var pkg in pkgs)
+                            pm.Logger.Indents += 2;
+                            foreach (var pkg in pkgs)
                             {
                                 Console.WriteLine("  * updating depending package '{0}'...", pkg.GetFullName());
-                                pm.UpdatePackage(pkg.Id, false, false);
+                                pm.UpdatePackage(pkg.Id, false, allowPre);
                             }
-                            logger.Indents -= 2;
+                            pm.Logger.Indents -= 2;
                         }
                     }
                 }

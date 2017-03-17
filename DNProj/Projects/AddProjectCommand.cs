@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NX;
 using Microsoft.Build.BuildEngine;
 
@@ -28,6 +29,7 @@ namespace DNProj
     public class AddProjectCommand : Command
     {
         string projName;
+        bool force = false;
 
         public AddProjectCommand()
             : base("dnproj add", 
@@ -37,18 +39,26 @@ use <filename:buildaction> to specify build action.
 build actions:
   Compile                    compile this file. (default)
   EmbeddedResource           embed this as resource.
-  None                       do nothing.
-
-example:
-  $ dnproj add A.cs B.png:EmbeddedResource C.txt:None", 
+  None                       do nothing.", 
                    "add files.", "<filename[:buildaction]>+", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
+            Options.Add("f|force", "force overwrite build action.", _ => force = _ != null, true);
+
+            this.AddTips("if you have a source file with ':' in its name, use ':Compile'.\n$ dnproj add Test:None.cs:Compile");
+            this.AddExample("$ dnproj add A.cs B.png:EmbeddedResource C.txt:None");
         }
 
         public override void Run(IEnumerable<string> args)
         {
             var p = this.LoadProject(ref args, ref projName);
+            if(!args.Any())
+            {
+                Report.Error("file(s) not specified.");
+                Console.WriteLine();
+                Help(args);
+                return;
+            }
             foreach (var f in args)
             {
                 var fn = f;
@@ -60,7 +70,22 @@ example:
                         fn = f.Replace(":" + x, "");
                         break;
                     }
+                    else if(x == "None" && f.Contains(":") && !f.EndsWith(":"))
+                    {
+                        act = f.Split(':').Last();
+                        fn = f.Replace(":" + act, "");
+                        if (force)
+                            break;
+                        else
+                        {
+                            Report.Error("invalid action '{0}', skipping '{1}'.", act, fn);
+                            Report.Info("'--force' to use '{0}' as a build action, if needed.", act);
+                            goto skip;
+                        }
+                    }
                 p.SourceItemGroup().AddNewItem(act, fn);
+                skip:
+                break;
             }
             p.Save(p.FullFileName);
         }

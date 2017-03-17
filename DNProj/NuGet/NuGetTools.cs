@@ -24,13 +24,118 @@ using System.IO;
 using System.Linq;
 using NX;
 using System.Diagnostics;
-using Mono.Options;
 using Microsoft.Build.BuildEngine;
 using NuGet;
 using System.Runtime.Versioning;
 
 namespace DNProj
 {
+    public class DNPackageOperationEventArgs : PackageOperationEventArgs
+    {
+        public DNPackageOperationEventArgs(IPackage p, IFileSystem f, string path, Option<FrameworkName> v)
+            : base(p, f, path)
+        {
+            AlternativeFramework = v;
+        }
+
+        public Option<FrameworkName> AlternativeFramework { get; set; }
+    }
+
+    public class DNPackageManager : PackageManager
+    {
+        Option<FrameworkName> alt;
+
+        public DNPackageManager(IPackageRepository repo, string path)
+            : base(repo, path)
+        {
+            this.Logger = new NuGetLogger();
+            this.PackageInstalled += (sender, e) => {};
+            this.PackageInstalling += (sender, e) => {};
+            base.PackageInstalled += (sender, e) => 
+            {
+                var _e = new DNPackageOperationEventArgs(e.Package, e.FileSystem, e.InstallPath, alt);
+                this.PackageInstalled(sender, _e);
+            };
+            base.PackageInstalling += (sender, e) => 
+            {
+                var _e = new DNPackageOperationEventArgs(e.Package, e.FileSystem, e.InstallPath, alt);
+                this.PackageInstalling(sender, _e);
+            };
+        }
+
+        public new NuGetLogger Logger
+        {
+            get
+            {
+                return (NuGetLogger)base.Logger;
+            }
+            set
+            {
+                base.Logger = value;
+            }
+        }
+
+        public new event EventHandler<DNPackageOperationEventArgs> PackageInstalled;
+
+        public new event EventHandler<DNPackageOperationEventArgs> PackageInstalling;
+
+        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<string> version = default(Option<string>), bool allowLowerFw = false, bool allowPre = false)
+        {
+            return InstallPackageWithValidation(fn, id, version.Map(SemanticVersion.Parse), allowLowerFw, allowPre);
+        }
+
+        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<SemanticVersion> version, bool allowLowerFw = false, bool allowPre = false)
+        {
+            var repo = this.SourceRepository;
+            Report.WriteLine(this.Logger.Indents, "* resolving '{0}'...", id);
+
+            var p = version.Match(
+                        v => repo.FindPackage(id, v),
+                        () => repo.FindPackage(id)
+                    );
+
+            if (p == null)
+            {
+                Report.Error(this.Logger.Indents, "package '{0}' doesn't exists.", id);
+                return Option.None;
+            }
+
+            var sfs = p.GetSupportedFrameworks();
+
+                
+            if (!sfs.Contains(fn))
+            {
+                var alto = p.FindAlternativeFramework(fn);    
+                if (alto.HasValue)
+                {
+                    if (allowLowerFw)
+                    {
+                        alt = alto;
+                        Report.Warning(this.Logger.Indents, "package '{0}' doesn't support '{1}', installing '{2}' instead...", id, fn, alto.Value);
+                    }
+                    else
+                    {
+                        Report.Error(this.Logger.Indents, "package '{0}' doesn't support framework '{1}'.", id, fn.FullName);
+                        Report.Info(this.Logger.Indents, "'--allow-downgrade-framework' to install '{0}' version instead.", alto.Value);
+                        return Option.None;
+                    }
+                }
+                else
+                {
+                    Report.Error(this.Logger.Indents, "package '{0}' doesn't support framework '{1}'.", id, fn.FullName);
+                    Report.Error(this.Logger.Indents, "available frameworks are: {0}", sfs.Map(x => string.Format("'{0}'", x)).JoinToString(", "));
+                    return Option.None;
+                }
+            }
+
+            Report.WriteLine(this.Logger.Indents, "* installing '{0}'...", p.GetFullName());
+            this.Logger.Indents += 2;
+            this.InstallPackage(p, true, allowPre);
+            this.Logger.Indents -= 2;
+            return p.Some();
+        }
+    }
+
     public static class NuGetTools
     {
         public static IEnumerable<IPackage> ResolveDependencies(
@@ -47,6 +152,18 @@ namespace DNProj
                     .Flatten()
                     .Distinct();
         }
+
+        public static Option<FrameworkName> FindAlternativeFramework(this IPackage p, FrameworkName fn)
+        {
+            var sfs = p.GetSupportedFrameworks();
+
+            if (!sfs.Contains(fn))
+                return sfs.Find(x => 
+                    x.Identifier == fn.Identifier && x.Version.Major == fn.Version.Major
+                );
+            else
+                return fn.Some();
+        }
     }
 
 
@@ -56,7 +173,7 @@ namespace DNProj
 
         public bool IsSilent { get; set; }
 
-        public Option<Func<string, bool>> Filter { get; set; } 
+        public Option<Func<string, bool>> Filter { get; set; }
 
         public NuGetLogger(int indents = 0, bool silent = false, Option<Func<string, bool>> filter = default(Option<Func<string, bool>>))
         {

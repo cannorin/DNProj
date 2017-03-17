@@ -40,6 +40,13 @@ namespace DNProj
         {
             var p = this.LoadProject(ref args, ref projName);
             var g = p.SourceItemGroup();
+            if(!args.Any())
+            {
+                Report.Error("file(s) not specified.");
+                Console.WriteLine();
+                Help(args);
+                return;
+            }
             foreach (var s in args)
                 g.Cast<BuildItem>()
                     .Try(xs => xs.First(x => x.Include == s))

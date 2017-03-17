@@ -26,7 +26,7 @@ namespace DNProj
     public class ProjectCommand : Command
     {
         public ProjectCommand()
-            : base("dnproj", "operate the .*proj file in the current directory.", "", "<command>", "[options]")
+            : base("dnproj", @"operate the .*proj file in the current directory.", "", "<command>", "[options]")
         {
             Commands["new"] = new NewProjectCommand();
             Commands["add"] = new AddProjectCommand();
@@ -38,12 +38,24 @@ namespace DNProj
             Commands["edit"] = new EditProjectCommand();
             Commands["conf"] = new ConfProjectCommand();
             Commands["item"] = new ItemProjectCommand();
-            Commands["nuget"] = new NugetProjectCommand(); 
+            Commands["nuget"] = new NugetProjectCommand();
+            Commands["tips"] = new SimpleCommand(_ =>
+            {
+                var hint = CommandHelpParts.GetRandom();
+                Console.WriteLine();
+                Console.WriteLine("{0} from '{1} --help' :", hint.Item1, hint.Item2);
+                Console.WriteLine();
+                Console.WriteLine(hint.Item3);
+                Console.WriteLine();
+                Environment.Exit(0);
+            }, "dnproj tips", "show random tips, examples, and warnings.", "show random tips, examples, and warnings.");
             Commands["version"] = new SimpleCommand(_ =>
                 {
                     Console.WriteLine("dnproj version {0}\ncopyright (c) cannorin 2016", Tools.Version);
                     Environment.Exit(0);
                 }, "dnproj version", "show version.", "show version.");
+
+            this.AddTips("if there is a project file (.*proj) in the current directory,\ndnproj will use it, so --proj is not required.");
         }
     }
 }

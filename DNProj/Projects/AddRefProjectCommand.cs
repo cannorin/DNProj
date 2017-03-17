@@ -35,19 +35,19 @@ namespace DNProj
         public AddRefProjectCommand()
             : base("dnproj add-ref", 
                    @"add references to specified project.
-
-example:
-  $ dnproj add-ref System.Numerics
-  $ dnproj add-ref System.Xml --cond "" '\$(Platform)' == 'AnyCPU' ""
-  $ dnproj add-ref System.Core --hint ""../packages/System.Core.1.0.0/lib/net45/System.Core.dll""
-
-warning:
-  on some shells such as bash, you must escape '$' charactors inside """" as ""\$"", or use '' instead.", 
-                   "add references.", "<referencename>", "[options]")
+you can add multiple references at once, when neither --cond nor --hint is used.", 
+                   "add references.", "<reference-name>", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
             Options.Add("c=|cond=", "specify condition.", c => cond = c.Some());
             Options.Add("hint=", "specify hint path.", h => hint = h.Some());
+
+            this.AddExample("$ dnproj add-ref System.Numerics System.Xml.Linq");
+            this.AddExample("$ dnproj add-ref System.Net.Http --cond \" '\\$(Platform)' == 'AnyCPU' \"");
+            this.AddExample("$ dnproj add-ref System.Net.Http --cond \" '\\$(Platform)' == 'AnyCPU' \"");
+            this.AddExample("$ dnproj add-ref System.Core --hint \"../packages/System.Core.1.0.0/lib/net45/System.Core.dll\"");
+
+            this.AddWarning("you must escape the dollar sign '$' inside \"\" as \"\\$\", or use '' instead.");
         }
 
         public override void Run(IEnumerable<string> args)
@@ -55,7 +55,29 @@ warning:
             var p = this.LoadProject(ref args, ref projName);
             var g = p.ReferenceItemGroup();
             if (!args.Any())
-                Report.Fatal("missing parameter.");
+            {
+                Report.Error("reference not specified.");
+                Console.WriteLine();
+                Help(args);
+                return;
+            }
+            else if (args.Count() > 1)
+            {
+                if ((cond || hint).HasValue)
+                {
+                    Report.Error("you can't add multiple references at once with --cond and/or --hint option used.");
+                    Console.WriteLine();
+                    Help(args);
+                    return; 
+                }
+                else
+                {
+                    foreach (var name in args)
+                    {
+                        g.AddNewItem("Reference", name);
+                    }
+                }
+            }
             else
             {
                 var name = args.First();
