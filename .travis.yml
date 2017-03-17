@@ -1,0 +1,7 @@
+language: csharp
+
+script:
+ - make
+
+mono:
+ - latest

@@ -51,9 +51,9 @@ namespace DNProj
             {
                 var args = Options.SafeParse(_args);
 
-                if (args.Count() == 1)
+                if (args.Any())
                 {
-                    var name = args.First();
+                    var name = args.JoinToString(" ");
                     var take = count.Default(10);
                     var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
                     var res = repo.Search(name, false);

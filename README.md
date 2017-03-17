@@ -1,7 +1,9 @@
 DNProj
 ======
 
-Manage your \*proj and sln with commandline.
+[![Build Status](https://travis-ci.org/cannorin/DNProj.svg?branch=master)](https://travis-ci.org/cannorin/DNProj)
+
+Manage your .\*proj and .sln with commandline.
 
 # dnproj
 
@@ -29,13 +31,65 @@ to build your project.
 
 # dnproj NuGet integration
 
+You can easily install, update, remove, and restore NuGet packages.
+
 ``` dnproj nuget install NuGet.Core EntityFramework:5.0.0 ```
 
 ``` dnproj nuget update ```
 
 ``` dnproj nuget remove EntityFramework ```
 
-``` dnproj nuget restore ``` (work in progress)
+``` dnproj nuget restore ```
+
+Also, you can perform a quick search on the NuGet repository.
+
+```
+$ dnproj nuget search "Reactive Extensions"
+Search result for 'Reactive Extensions' from https://packages.nuget.org/api/v2.
+
+------------
+
+* System.Threading.Tasks.Extensions
+  Ver.4.3.0 / 3743690 Downloads
+  Description:
+    Provides additional types that simplify the work of writing concurrent and asynchronous code.
+
+    Commonly Used Types:
+    System.Threading.Tasks.ValueTask<TResult>
+  Url: https://dot.net/
+  Tags:
+  This package requires license acceptance.
+  License url: http://go.microsoft.com/fwlink/?LinkId=329770
+
+------------
+
+* My useful extensions pack
+  Ver.1.0.5 / 2047 Downloads
+  Description:
+    Extensions, sorted by namespaces
+  Url:
+  Tags: c# extensions .net
+
+------------
+
+* System.Reflection.Extensions
+  Ver.4.3.0 / 7509987 Downloads
+  Description:
+    Provides custom attribute extension methods for System.Reflection types.
+
+    Commonly Used Types:
+    System.Reflection.InterfaceMapping
+    System.Reflection.CustomAttributeExtensions
+    System.Reflection.RuntimeReflectionExtensions
+
+    When using NuGet 3.x this package requires at least version 3.4.
+  Url: https://dot.net/
+  Tags:
+  This package requires license acceptance.
+  License url: http://go.microsoft.com/fwlink/?LinkId=329770
+
+...
+```
 
 # dnsln
 
