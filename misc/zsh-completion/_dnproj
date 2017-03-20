@@ -1,0 +1,10 @@
+#compdef dnproj
+
+_dnproj() {
+    local context state linex
+    local lines=$(dnproj --generate-suggestions "${words[@]:1}")
+    for cmd in $lines; do
+        eval $cmd;
+    done
+    return 0
+}

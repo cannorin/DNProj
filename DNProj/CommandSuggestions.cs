@@ -53,7 +53,12 @@ namespace DNProj
 
         static IEnumerable<string> mapQuote(IEnumerable<string> seq)
         {
-            return seq.Map(x => string.Format("'{0}'", x));
+            return seq.Map(x => string.Format("'{0}'", escape(x)));
+        }
+
+        static string escape(string s)
+        {
+            return s.Replace("'", "'\"'\"'").Replace(":", "\\:");
         }
 
         public static CommandSuggestion Values(IEnumerable<string> args)
@@ -69,16 +74,16 @@ namespace DNProj
         public static CommandSuggestion Files(Option<string> filter = default(Option<string>))
         {
             return filter.Match(
-                x => new CommandSuggestion("_files", "-/", "-g", string.Format("'{0}'", x)),
-                () => new CommandSuggestion("_files", "-/")
+                x => new CommandSuggestion("_files", "-g", string.Format("'{0}'", x)),
+                () => new CommandSuggestion("_files")
             );
         }
 
         public static CommandSuggestion Directories(Option<string> filter = default(Option<string>))
         {
             return filter.Match(
-                x => new CommandSuggestion("_files", "-g", string.Format("'{0}'", x)),
-                () => new CommandSuggestion("_files")
+                x => new CommandSuggestion("_files", "-/", "-g", string.Format("'{0}'", x)),
+                () => new CommandSuggestion("_files", "-/")
             );
         }
 
@@ -87,11 +92,11 @@ namespace DNProj
             if (aliases.Count() == 1)
             {
                 var f = aliases.First();
-                return new CommandSuggestion("_arguments", string.Format("'{0}[{1}]'", f, description));
+                return new CommandSuggestion("_arguments", string.Format("'{0}[{1}]'", f, escape(description), "\"*: :->hoge\""));
             }
             else
             {
-                return new CommandSuggestion("_arguments", string.Format("{{{0}}}'[{1}]'", aliases.JoinToString(","), description));
+                return new CommandSuggestion("_arguments", string.Format("{{{0}}}'[{1}]'", aliases.JoinToString(","), escape(description)), "\"*: :->hoge\"");
             }
         }
 
@@ -104,7 +109,7 @@ namespace DNProj
         {
             get
             {
-                return new CommandSuggestion("_values", "'none'");
+                return new CommandSuggestion(":");
             }
         }
     }
@@ -117,7 +122,18 @@ namespace DNProj
                 return CommandSuggestion.None.Singleton();
             else
                 return cs.GroupBy(x => x.RawText[0])
-                     .Map(c => new CommandSuggestion(c.Key.Singleton().Concat(c.Map(x => x.RawText.Skip(1)).Flatten())));
+                    .Map(c => 
+                    {
+                        if(c.Key == "_arguments")
+                        {
+                            return new CommandSuggestion(
+                                c.Key.Singleton()
+                                     .Concat(c.Map(x => x.RawText.Skip(1).Rev().Skip(1).Rev()).Flatten())
+                                     .Concat("\"*: :->hoge\"".Singleton()));
+                        }
+                        else
+                            return new CommandSuggestion(c.Key.Singleton().Concat(c.Map(x => x.RawText.Skip(1)).Flatten()));
+                    });
         }
 
         public static IEnumerable<CommandSuggestion> GenerateSuggestions(
