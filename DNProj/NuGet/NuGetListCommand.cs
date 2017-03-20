@@ -43,20 +43,44 @@ namespace DNProj
                    @"list installed NuGet packages.", "list installed NuGet packages.", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", s => projName = s);
-            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s.Some());
+            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s);
 
             this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions
+            (
+                args,
+                i =>
+                {
+                    switch(i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        case "-c":
+                        case "--config":
+                            return CommandSuggestion.Files("packages.config");
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                }
+            );
         }
 
         public override void Run(IEnumerable<string> args)
         {
             var proj = this.LoadProject(ref args, ref projName);
             // find packages.config
-            var conf = new PackageReferenceFile(config.Map(Path.GetFullPath)
-                    .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config")));
+            var confPath = config.Map(Path.GetFullPath)
+                .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config"));
 
-            if(!File.Exists(conf.FullPath))
-                Report.Fatal("'{0}' does not exist.", conf);
+            if(!File.Exists(confPath))
+                Report.Fatal("'{0}' does not exist.", confPath);
+
+            var conf = new PackageReferenceFile(confPath);
 
             // find packages/
             var path = proj.ReferenceItems()

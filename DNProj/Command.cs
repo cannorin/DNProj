@@ -134,6 +134,21 @@ namespace DNProj
                 }
             }
         }
+
+        public virtual IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions(args);
+        }
+
+        public virtual IEnumerable<CommandSuggestion> GetChildSuggestions(ChildCommand child, IEnumerable<string> args)
+        {
+            throw new NotImplementedException("Implement this if your command has subcommands.");
+        }
+
+        protected Command Child(Action<IEnumerable<string>> f, string name, string desc, string sdesc, params string[] args)
+        {
+            return new ChildCommand(this, f, name, desc, sdesc, args);
+        }
     }
 
     public static class CommandHelpParts
@@ -242,19 +257,28 @@ namespace DNProj
         }
     }
 
-    public class SimpleCommand : Command
+    public class ChildCommand : Command
     {
         Action<IEnumerable<string>> a;
 
-        public SimpleCommand(Action<IEnumerable<string>> f, string name, string desc, string sdesc, params string[] args)
+        Command p;
+
+        public ChildCommand(Command parent, Action<IEnumerable<string>> f, string name, string desc, string sdesc, params string[] args)
             : base(name, desc, sdesc, args)
         {
             a = f;
+            Options = parent.Options;
+            p = parent;
         }
 
         public override void Run(IEnumerable<string> args)
         {
             a(args);
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return p.GetChildSuggestions(this, args);
         }
 
         public override void Help(IEnumerable<string> args)

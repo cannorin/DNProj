@@ -39,7 +39,7 @@ namespace DNProj
             Commands["conf"] = new ConfProjectCommand();
             Commands["item"] = new ItemProjectCommand();
             Commands["nuget"] = new NugetProjectCommand();
-            Commands["tips"] = new SimpleCommand(_ =>
+            Commands["tips"] = Child(_ =>
             {
                 var hint = CommandHelpParts.GetRandom();
                 Console.WriteLine();
@@ -49,7 +49,7 @@ namespace DNProj
                 Console.WriteLine();
                 Environment.Exit(0);
             }, "dnproj tips", "show random tips, examples, and warnings.", "show random tips, examples, and warnings.");
-            Commands["version"] = new SimpleCommand(_ =>
+            Commands["version"] = Child(_ =>
                 {
                     Console.WriteLine("dnproj version {0}\ncopyright (c) cannorin 2016", Tools.Version);
                     Environment.Exit(0);

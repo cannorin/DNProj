@@ -46,10 +46,32 @@ namespace DNProj
         {
             Options.Add("p=|proj=", "specify project file explicitly.", s => projName = s);
             Options.Add("custom-source=", "use custom NuGet source. only the NuGet v2 endpoint can be used.", p => sourceUrl = p);
-            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s.Some());
+            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s);
             Options.Add("v|verbose", "show detailed log.", _ => verbose = _ != null);
 
             this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions
+            (
+                args,
+                i =>
+                {
+                    switch(i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        case "-c":
+                        case "--config":
+                            return CommandSuggestion.Files("packages.config");
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                }
+            );
         }
 
         public override void Run(IEnumerable<string> args)
@@ -70,7 +92,7 @@ namespace DNProj
                 var path = proj.ReferenceItems()
                     .Choose(ProjectTools.GetAbsoluteHintPath)
                     .Filter(x => prs.Any(pr => x.Contains(pr.Id)))
-                    .Map(x => Path.GetDirectoryName(x).Unfold(s => Tuple.Create(Directory.GetParent(s), Directory.GetParent(s).FullName)).Nth(2))
+                    .Choose(x => Path.GetDirectoryName(x).Unfold(s => Tuple.Create(Directory.GetParent(s), Directory.GetParent(s).FullName)).Nth(2))
                     .Map(x => x.FullName)
                     .Head()
                     .AbortNone(() =>
@@ -148,7 +170,7 @@ namespace DNProj
                     if(!localrepo.Exists(pr.Id, pr.Version))
                     {
                         Console.WriteLine("* restoring '{0}'...", pr.Id);
-                        pm.InstallPackageWithValidation(fn, pr.Id, pr.Version.Some(), true, true);
+                        pm.InstallPackageWithValidation(fn, pr.Id, pr.Version, true, true);
                     }
                     else
                         Report.Warning("'{0}' is already installed, skipping...", pr.Id);

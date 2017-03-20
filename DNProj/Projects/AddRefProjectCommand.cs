@@ -39,8 +39,8 @@ you can add multiple references at once, when neither --cond nor --hint is used.
                    "add references.", "<reference-name>", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
-            Options.Add("c=|cond=", "specify condition.", c => cond = c.Some());
-            Options.Add("hint=", "specify hint path.", h => hint = h.Some());
+            Options.Add("c=|cond=", "specify condition.", c => cond = c);
+            Options.Add("hint=", "specify hint path.", h => hint = h);
 
             this.AddExample("$ dnproj add-ref System.Numerics System.Xml.Linq");
             this.AddExample("$ dnproj add-ref System.Net.Http --cond \" '\\$(Platform)' == 'AnyCPU' \"");
@@ -48,6 +48,49 @@ you can add multiple references at once, when neither --cond nor --hint is used.
             this.AddExample("$ dnproj add-ref System.Core --hint \"../packages/System.Core.1.0.0/lib/net45/System.Core.dll\"");
 
             this.AddWarning("you must escape the dollar sign '$' inside \"\" as \"\\$\", or use '' instead.");
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions(
+                args,
+                i =>
+                {
+                    switch (i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        case "-c":
+                        case "--cond":
+                            return CommandSuggestion.None;
+                        case "--hint":
+                            return CommandSuggestion.Files("*.dll");
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                },
+                () => CommandSuggestion.Values(
+                    Shell.Eval("gacutil", "-l")
+                        .Split('\n')
+                        .Rev().Skip(2).Rev()
+                        .Filter(x => !x.StartsWith("policy."))
+                        .Choose(x => x.Try(_x => _x.Split(true, ", ")[0]))
+                ),
+                xs => 
+                {
+                    if ((cond || hint).HasValue)
+                        return CommandSuggestion.None;
+                    else
+                        return CommandSuggestion.Values(
+                            Shell.Eval("gacutil", "-l")
+                            .Split('\n')
+                            .Rev().Skip(2).Rev()
+                            .Filter(x => !x.StartsWith("policy."))
+                            .Choose(x => x.Try(_x => _x.Split(true, ", ")[0]))
+                        );
+                }
+            ); 
         }
 
         public override void Run(IEnumerable<string> args)

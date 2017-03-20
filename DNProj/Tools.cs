@@ -84,6 +84,21 @@ namespace DNProj
 
     public static class Tools
     {
+        public static void CallAsMain<T>(string[] args)
+            where T : Command, new()
+        {
+            if(args.Length > 0 && args[0] == "--generate-suggestions")
+            {
+                var ss = new T().GetSuggestions(args.Skip(1)).Reduce();
+                foreach(var s in ss)
+                {
+                    Console.WriteLine(string.Join(" ", s.RawText));
+                }
+            }
+            else
+                new T().Run(args);
+        }
+
         public static bool WeakEquals(this string s, string t)
         {
             return s.Replace(" ", "").Equals(t.Replace(" ", ""));

@@ -36,6 +36,53 @@ namespace DNProj
             Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
         }
 
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions(
+                args,
+                i =>
+                {
+                        switch (i)
+                        {
+                            case "-p":
+                            case "--proj":
+                                return CommandSuggestion.Files("*proj");
+                            default:
+                                return CommandSuggestion.None;
+                        }
+                },
+                () =>
+                {
+                    var p = ProjectTools.GetProject(projName);
+                    if (p.HasValue)
+                    {
+                        var gs = p.Value.ReferenceItemGroup().Cast<BuildItem>().Map(x => x.Include);
+                        if(gs.Any())
+                            return CommandSuggestion.Values(gs);
+                        else
+                            return CommandSuggestion.None;
+                    }
+                    else
+                        return CommandSuggestion.None;
+                },
+                _ =>
+                {
+                    var p = ProjectTools.GetProject(projName);
+                    if (p.HasValue)
+                    {
+                        var gs = p.Value.ReferenceItemGroup().Cast<BuildItem>().Map(x => x.Include);
+                        if(gs.Any())
+                            return CommandSuggestion.Values(gs);
+                        else
+                            return CommandSuggestion.None;
+                    }
+                    else
+                        return CommandSuggestion.None;
+                }
+                );
+            }
+
+
         public override void Run(IEnumerable<string> args)
         {
             var p = this.LoadProject(ref args, ref projName);

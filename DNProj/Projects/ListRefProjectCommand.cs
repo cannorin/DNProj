@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Build.BuildEngine;
+using NX;
 
 namespace DNProj
 {
@@ -32,6 +33,24 @@ namespace DNProj
             : base("dnproj ls-ref", "show references in speficied project.", "show references.", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions(
+                args,
+                i =>
+                {
+                    switch (i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                }
+            );
         }
 
         public override void Run(IEnumerable<string> args)

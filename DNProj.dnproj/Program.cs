@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System;
 
 ﻿namespace DNProj.Proj
 {
@@ -25,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     {
         public static void Main(string[] args)
         {
-            new ProjectCommand().Run(args);
+            Tools.CallAsMain<ProjectCommand>(args);
         }
     }
 }

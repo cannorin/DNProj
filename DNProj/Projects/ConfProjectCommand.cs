@@ -49,7 +49,7 @@ $ dnproj conf rm-group -i 2"
 
             this.AddWarning("you must escape the dollar sign '$' inside \"\" as \"\\$\", or use '' instead.");
 
-            Commands["show"] = new SimpleCommand(
+            Commands["show"] = Child(
                 args =>
                 {
                     var p = Commands["show"].LoadProject(ref args, ref projName);
@@ -59,18 +59,18 @@ $ dnproj conf rm-group -i 2"
                             printPropertyGroup(pg.v, pg.i);
                     else if (args.LengthNX() == 0)
                     {
-                        var g = gs.Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                        var g = gs.Nth(gIndex.Value).AbortNone(() =>
                             Report.Fatal("index out of range.")
                         );
                         printPropertyGroup(g, gIndex.Value);
                     } 
                 }, "dnproj conf show", "show project configurations.", "show project configurations.", "[options]");
 
-            Commands["set"] = new SimpleCommand(
+            Commands["set"] = Child(
                 args =>
                 {
                     var p = Commands["set"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                    var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
                         Report.Fatal("index out of range.")
                     );
                     if (!args.Any())
@@ -89,11 +89,11 @@ $ dnproj conf rm-group -i 2"
                     p.Save(p.FullFileName);
                 }, "dnproj conf set", "add or change property value.\ngiving empty <value> will set empty value.", "add or change property value.", "<name>", "<value>", "[options]");
 
-            Commands["set-condition"] = new SimpleCommand(
+            Commands["set-condition"] = Child(
                 args =>
                 {
                     var p = Commands["set-condition"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                    var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
                         Report.Fatal("index out of range.")
                     ); 
                     if (!args.Any())
@@ -114,11 +114,11 @@ $ dnproj conf rm-group -i 2"
                     p.Save(p.FullFileName);
                 }, "dnproj conf set-condition", "set conditon to property.\ngiving empty <condition> will remove condition.", "set condition to property.", "<name>", "<condition>", "[options]");
 
-            Commands["rm"] = new SimpleCommand(
+            Commands["rm"] = Child(
                 args =>
                 {
                     var p = Commands["rm"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                    var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
                         Report.Fatal("index out of range.")
                     ); 
                     foreach (var s in args)
@@ -132,7 +132,7 @@ $ dnproj conf rm-group -i 2"
                     p.Save(p.FullFileName);
                 }, "dnproj conf rm", "remove property.", "remove property.", "<name>+", "[options]");
 
-            Commands["add-group"] = new SimpleCommand(
+            Commands["add-group"] = Child(
                 args =>
                 {
                     var p = Commands["add-group"].LoadProject(ref args, ref projName);
@@ -143,7 +143,7 @@ $ dnproj conf rm-group -i 2"
                     p.Save(p.FullFileName);
                 }, "dnproj conf add-group", "add property group.", "add property group.", "[condition]", "[options]");
 
-            Commands["set-group-condition"] = new SimpleCommand(
+            Commands["set-group-condition"] = Child(
                 args =>
                 {
                     var p = Commands["set-group-condition"].LoadProject(ref args, ref projName);
@@ -152,6 +152,7 @@ $ dnproj conf rm-group -i 2"
 
                     var cond = args.JoinToString(" ");
                     gIndex.Map(Groups(p).Nth)
+                    .Flatten()
                     .Match(
                         g =>
                         {
@@ -163,12 +164,13 @@ $ dnproj conf rm-group -i 2"
                     );
                 }, "dnproj set-group-condition", "set condition to specified group. -i option is required. \ngiving empty condition will remove condition.", "set condition to group.", "[condition]", "[options]");
 
-            Commands["rm-group"] = new SimpleCommand(
+            Commands["rm-group"] = Child(
                 args =>
                 {
                     var p = Commands["rm-group"].LoadProject(ref args, ref projName);
 
                     gIndex.Map(Groups(p).Nth)
+                    .Flatten()
                     .Match(
                         g =>
                         {
@@ -178,6 +180,104 @@ $ dnproj conf rm-group -i 2"
                         () => Report.Fatal("group index not specified.")
                     );
                 }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions(
+                args,
+                i =>
+                {
+                    switch (i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        case "-i":
+                        case "--group-index":
+                            var p = ProjectTools.GetProject(projName);
+                            if(p.HasValue)
+                                return CommandSuggestion.Values(Seq.ZeroTo(Groups(p.Value).Count()).Map(x => x.ToString()));
+                            else
+                                return CommandSuggestion.None;
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                }
+            );
+        }
+
+        public override IEnumerable<CommandSuggestion> GetChildSuggestions(ChildCommand child, IEnumerable<string> args)
+        {
+            switch(child.Name.Split(' ').Last())
+            {
+                case "show":
+                    yield return CommandSuggestion.None;
+                    break; 
+                case "set":
+                    if(!args.Any())
+                    {
+                        var p = ProjectTools.GetProject(projName);
+                        if (p.HasValue)
+                        {
+                            var gs = Groups(p.Value);
+                            var idx = gIndex.Default(0);
+                            yield return 
+                                gs.Nth(idx)
+                                  .Map(x => x.Cast<BuildProperty>().Map(y => y.Name))
+                                  .Map(CommandSuggestion.Values)
+                                  .Default(CommandSuggestion.None);
+                        }
+                        else
+                            yield return CommandSuggestion.None;
+                    }
+                    else
+                        yield return CommandSuggestion.None;
+                    break;
+
+                case "set-condition":
+                    if(!args.Any())
+                    {
+                        var p = ProjectTools.GetProject(projName);
+                        if (p.HasValue)
+                        {
+                            var gs = Groups(p.Value);
+                            var idx = gIndex.Default(0);
+                            yield return 
+                                gs.Nth(idx)
+                                    .Map(x => x.Cast<BuildProperty>().Map(y => y.Name))
+                                    .Map(CommandSuggestion.Values)
+                                    .Default(CommandSuggestion.None);
+                        }
+                        else
+                            yield return CommandSuggestion.None;
+                    }
+                    else
+                        yield return CommandSuggestion.None;
+                    break;
+
+                case "rm":
+                    {
+                        var p = ProjectTools.GetProject(projName);
+                        if (p.HasValue)
+                        {
+                            var gs = Groups(p.Value);
+                            var idx = gIndex.Default(0);
+                            yield return 
+                                gs.Nth(idx)
+                                    .Map(x => x.Cast<BuildProperty>().Map(y => y.Name))
+                                    .Map(CommandSuggestion.Values)
+                                    .Default(CommandSuggestion.None);
+                        }
+                        else
+                            yield return CommandSuggestion.None;
+                    }
+                    break;
+
+                default:
+                    yield return CommandSuggestion.None;
+                    break;
+            }
         }
 
         IEnumerable<BuildPropertyGroup> Groups(Project p)

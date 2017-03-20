@@ -52,7 +52,7 @@ in most cases, you can use 'dnproj add', 'dnproj add-ref', 'dnproj rm', and 'dnp
 
             this.AddWarning("you must escape the dollar sign '$' inside \"\" as \"\\$\", or use '' instead.");
 
-            Commands["show"] = new SimpleCommand(
+            Commands["show"] = Child(
                 args =>
                 {
                     var p = Commands["show"].LoadProject(ref args, ref projName);
@@ -62,18 +62,18 @@ in most cases, you can use 'dnproj add', 'dnproj add-ref', 'dnproj rm', and 'dnp
                             printItemGroup(pg.v, pg.i);
                     else if (args.LengthNX() == 0)
                     {
-                    var g = gs.Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                    var g = gs.Nth(gIndex.Value).AbortNone(() =>
                             Report.Fatal("index out of range.")
                         );
                         printItemGroup(g, gIndex.Value);
                     } 
                 }, "dnproj item show", "show project itemigurations.", "show project itemigurations.", "[options]");
 
-            Commands["add"] = new SimpleCommand(
+            Commands["add"] = Child(
                 args =>
                 {
                     var p = Commands["add"].LoadProject(ref args, ref projName);
-                var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
                         Report.Fatal("index out of range.")
                     );
                     if (!args.Any())
@@ -103,11 +103,11 @@ build actions:
   None                       do nothing.
   Reference                  treat as reference.", "add items.", "<filename[:buildaction]>+", "[options]");
 
-            Commands["set-condition"] = new SimpleCommand(
+            Commands["set-condition"] = Child(
                 args =>
                 {
                     var p = Commands["set-condition"].LoadProject(ref args, ref projName);
-                    var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                    var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
                         Report.Fatal("index out of range.")
                     ); 
                     if (!args.Any())
@@ -128,11 +128,11 @@ build actions:
                     p.Save(p.FullFileName);
                 }, "dnproj item set-condition", "set conditon to item.\ngiving empty <condition> will remove condition.", "set condition to item.", "<filename>", "<condition>", "[options]");
 
-            Commands["set-hintpath"] = new SimpleCommand(
+            Commands["set-hintpath"] = Child(
                 args =>
                 {
                     var p = Commands["set-hintpath"].LoadProject(ref args, ref projName);
-                var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
                         Report.Fatal("index out of range.")
                     ); 
                     if (!args.Any())
@@ -160,11 +160,11 @@ build actions:
                 }, "dnproj item set-hintpath", "set hint path to item.\ngiving empty <path> will remove hint path.", "set hint path to item.", "<filename>", "<path>", "[options]");
             
 
-            Commands["rm"] = new SimpleCommand(
+            Commands["rm"] = Child(
                 args =>
                 {
                     var p = Commands["rm"].LoadProject(ref args, ref projName);
-                var g = Groups(p).Try(xs => xs.Nth(gIndex.Value)).AbortNone(() =>
+                var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
                         Report.Fatal("index out of range.")
                     ); 
                     foreach (var s in args)
@@ -178,7 +178,7 @@ build actions:
                     p.Save(p.FullFileName);
                 }, "dnproj item rm", "remove item.", "remove item.", "<filename>+", "[options]");
 
-            Commands["add-group"] = new SimpleCommand(
+            Commands["add-group"] = Child(
                 args =>
                 {
                     var p = Commands["add-group"].LoadProject(ref args, ref projName);
@@ -189,7 +189,7 @@ build actions:
                     p.Save(p.FullFileName);
                 }, "dnproj item add-group", "add item group.", "add item group.", "[condition]", "[options]");
 
-            Commands["set-group-condition"] = new SimpleCommand(
+            Commands["set-group-condition"] = Child(
                 args =>
                 {
                     var p = Commands["set-group-condition"].LoadProject(ref args, ref projName);
@@ -198,6 +198,7 @@ build actions:
 
                     var cond = args.JoinToString(" ");
                     gIndex.Map(Groups(p).Nth)
+                    .Flatten()
                     .Match(
                         g =>
                         {
@@ -209,12 +210,13 @@ build actions:
                     );
                 }, "dnproj set-group-condition", "set condition to specified group. -i option is required. \ngiving empty condition will remove condition.", "set condition to group.", "[condition]", "[options]");
 
-            Commands["rm-group"] = new SimpleCommand(
+            Commands["rm-group"] = Child(
                 args =>
                 {
                     var p = Commands["rm-group"].LoadProject(ref args, ref projName);
 
                     gIndex.Map(Groups(p).Nth)
+                    .Flatten()
                     .Match(
                         g =>
                         {
@@ -224,6 +226,126 @@ build actions:
                         () => Report.Fatal("group index not specified.")
                     );
                 }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions(
+                args,
+                i =>
+            {
+                switch (i)
+                {
+                    case "-p":
+                    case "--proj":
+                        return CommandSuggestion.Files("*proj");
+                    case "-i":
+                    case "--group-index":
+                        var p = ProjectTools.GetProject(projName);
+                        if(p.HasValue)
+                            return CommandSuggestion.Values(Seq.ZeroTo(Groups(p.Value).Count()).Map(x => x.ToString()));
+                        else
+                            return CommandSuggestion.None;
+                    default:
+                        return CommandSuggestion.None;
+                }
+            }
+            );
+        }
+
+        public override IEnumerable<CommandSuggestion> GetChildSuggestions(ChildCommand child, IEnumerable<string> args)
+        {
+            switch(child.Name.Split(' ').Last())
+            {
+                case "show":
+                    yield return CommandSuggestion.None;
+                    break; 
+
+                case "set":
+                    if(!args.Any())
+                    {
+                        var p = ProjectTools.GetProject(projName);
+                        if (p.HasValue)
+                        {
+                            var gs = Groups(p.Value);
+                            var idx = gIndex.Default(0);
+                            yield return 
+                                gs.Nth(idx)
+                                    .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
+                                    .Map(CommandSuggestion.Values)
+                                    .Default(CommandSuggestion.None);
+                        }
+                        else
+                            yield return CommandSuggestion.None;
+                    }
+                    else
+                        yield return CommandSuggestion.None;
+                    break;
+
+                case "set-condition":
+                    if(!args.Any())
+                    {
+                        var p = ProjectTools.GetProject(projName);
+                        if (p.HasValue)
+                        {
+                            var gs = Groups(p.Value);
+                            var idx = gIndex.Default(0);
+                            yield return 
+                                gs.Nth(idx)
+                                    .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
+                                    .Map(CommandSuggestion.Values)
+                                    .Default(CommandSuggestion.None);
+                        }
+                        else
+                            yield return CommandSuggestion.None;
+                    }
+                    else
+                        yield return CommandSuggestion.None;
+                    break;
+
+                case "set-hintpath":
+                    if (!args.Any())
+                    {
+                        var p = ProjectTools.GetProject(projName);
+                        if (p.HasValue)
+                        {
+                            var gs = Groups(p.Value);
+                            var idx = gIndex.Default(0);
+                            yield return 
+                                gs.Nth(idx)
+                                    .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
+                                    .Map(CommandSuggestion.Values)
+                                    .Default(CommandSuggestion.None);
+                        }
+                        else
+                            yield return CommandSuggestion.None;
+                    }
+                    else
+                        yield return CommandSuggestion.Files("*.dll");
+                    break;
+
+                case "rm":
+                    {
+                        var p = ProjectTools.GetProject(projName);
+                        if (p.HasValue)
+                        {
+                            var gs = Groups(p.Value);
+                            var idx = gIndex.Default(0);
+                            yield return 
+                                gs.Nth(idx)
+                                    .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
+                                    .Map(CommandSuggestion.Values)
+                                    .Default(CommandSuggestion.None);
+                        }
+                        else
+                            yield return CommandSuggestion.None;
+                    }
+                    break;
+
+                default:
+                    yield return CommandSuggestion.None;
+                    break;
+            }
         }
 
         internal static void DumpItemGroup(Project p)

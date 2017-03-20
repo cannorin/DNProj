@@ -51,13 +51,71 @@ if no package names are specified, it will try to) update all the installed pack
         {
             Options.Add("p=|proj=", "specify project file explicitly.", s => projName = s);
             Options.Add("custom-source=", "use custom NuGet source. only the NuGet v2 endpoint can be used.", p => sourceUrl = p);
-            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s.Some());
+            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s);
             Options.Add("r|recursive", "update packages' dependencies too.", _ => recursive = _ != null);
             Options.Add("a|allow-prerelease", "use the pre release version of packages, if available.", _ => allowPre = _ != null);
             Options.Add("d|allow-downgrade-framework", "try installing .NET 4.0 version if the package doesn't support .NET 4.5.", _ => allow40 = _ != null);
             Options.Add("v|verbose", "show detailed log.", _ => verbose = _ != null);
 
             this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions
+            (
+                args,
+                i =>
+                {
+                    switch(i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        case "-c":
+                        case "--config":
+                            return CommandSuggestion.Files("packages.config");
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                },
+                () =>
+                {
+                    var p = ProjectTools.GetProject(projName);
+                    if (p.HasValue)
+                    {
+                        var proj = p.Value;
+                        var confPath = config.Map(Path.GetFullPath)
+                            .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config"));
+                        if(File.Exists(confPath))
+                        {
+                            var conf = new PackageReferenceFile(confPath);
+                            return CommandSuggestion.Values(conf.GetPackageReferences().Map(x => x.Id));
+                        }
+                        else return CommandSuggestion.None;
+                    }
+                    else
+                        return CommandSuggestion.None;
+                },
+                _ =>
+                {
+                    var p = ProjectTools.GetProject(projName);
+                    if (p.HasValue)
+                    {
+                        var proj = p.Value;
+                        var confPath = config.Map(Path.GetFullPath)
+                            .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config"));
+                        if(File.Exists(confPath))
+                        {
+                            var conf = new PackageReferenceFile(confPath);
+                            return CommandSuggestion.Values(conf.GetPackageReferences().Map(x => x.Id));
+                        }
+                        else return CommandSuggestion.None;
+                    }
+                    else
+                        return CommandSuggestion.None;
+                }
+            );
         }
 
         public override void Run(IEnumerable<string> args)
@@ -78,6 +136,7 @@ if no package names are specified, it will try to) update all the installed pack
                     .Choose(ProjectTools.GetAbsoluteHintPath)
                     .Head()
                     .Map(x => Path.GetDirectoryName(x).Unfold(s => Tuple.Create(Directory.GetParent(s), Directory.GetParent(s).FullName)).Nth(2))
+                    .Flatten()
                     .Map(x => x.FullName).AbortNone(() =>
                         Report.Fatal("there are no installed packages.")
                                        );

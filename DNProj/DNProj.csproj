@@ -17,10 +17,10 @@
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Externalconsole>true</Externalconsole>
     <PlatformTarget>x86</PlatformTarget>
-    <Commandlineparameters>proj</Commandlineparameters>
+    <Commandlineparameters>--generate-suggestions conf show</Commandlineparameters>
     <LangVersion>6</LangVersion>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>full</DebugType>
@@ -76,6 +76,7 @@
     <Compile Include="NuGet\NuGetUpdateCommand.cs" />
     <Compile Include="NuGet\NuGetRestoreCommand.cs" />
     <Compile Include="Command.cs" />
+    <Compile Include="CommandSuggestions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

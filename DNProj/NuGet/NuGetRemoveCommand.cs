@@ -48,11 +48,69 @@ namespace DNProj
             Options.Add("p=|proj=", "specify project file explicitly.", s => projName = s);
             Options.Add("f|force", "force remove packages although unresolved dependencies still exist.", _ => force = _ != null);
             Options.Add("r|recursive", "remove packages' dependencies too.", _ => recursive = _ != null);
-            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s.Some());
+            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s);
             Options.Add("v|verbose", "show detailed log.", _ => verbose = _ != null);
 
             this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
             this.AddExample("$ dnproj nuget remove EntityFramework");
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions
+            (
+                args,
+                i =>
+                {
+                    switch(i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        case "-c":
+                        case "--config":
+                            return CommandSuggestion.Files("packages.config");
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                },
+                () =>
+                {
+                    var p = ProjectTools.GetProject(projName);
+                    if (p.HasValue)
+                    {
+                        var proj = p.Value;
+                        var confPath = config.Map(Path.GetFullPath)
+                            .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config"));
+                        if(File.Exists(confPath))
+                        {
+                            var conf = new PackageReferenceFile(confPath);
+                            return CommandSuggestion.Values(conf.GetPackageReferences().Map(x => x.Id));
+                        }
+                        else return CommandSuggestion.None;
+                    }
+                    else
+                        return CommandSuggestion.None;
+                },
+                _ =>
+                {
+                    var p = ProjectTools.GetProject(projName);
+                    if (p.HasValue)
+                    {
+                        var proj = p.Value;
+                        var confPath = config.Map(Path.GetFullPath)
+                            .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config"));
+                        if(File.Exists(confPath))
+                        {
+                            var conf = new PackageReferenceFile(confPath);
+                            return CommandSuggestion.Values(conf.GetPackageReferences().Map(x => x.Id));
+                        }
+                        else return CommandSuggestion.None;
+                    }
+                    else
+                        return CommandSuggestion.None;
+                }
+           );
         }
 
         public override void Run(IEnumerable<string> args)
@@ -69,9 +127,10 @@ namespace DNProj
 
                 // find packages/
                 var path = proj.ReferenceItems()
-                    .Map(ProjectTools.GetAbsoluteHintPath)
-                    .FindSome()
+                    .Choose(ProjectTools.GetAbsoluteHintPath)
+                    .Head()
                     .Map(x => Path.GetDirectoryName(x).Unfold(s => Tuple.Create(Directory.GetParent(s), Directory.GetParent(s).FullName)).Nth(2))
+                    .Flatten()
                     .Map(x => x.FullName).AbortNone(() =>
                     Report.Fatal("there is no NuGet package installed.")
                 );

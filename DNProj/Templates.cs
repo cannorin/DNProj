@@ -29,7 +29,7 @@ namespace DNProj
 {
     public static class Templates
     {
-        public static string[] HelpOptions { get; } = new []{"help", "--help", "-h", "-?"};
+        public static string[] HelpOptions { get; } = new []{"--help", "-h", "-?"};
 
         public static string[] BuildItems { get; } = new []{ "Compile", "EmbeddedResource", "None", "Content" };
 

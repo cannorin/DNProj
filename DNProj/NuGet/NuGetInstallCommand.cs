@@ -49,9 +49,9 @@ namespace DNProj
                    @"install NuGet packages to project.", "install NuGet packages.", "<name[:version]>+", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", s => projName = s);
-            Options.Add("s=|sln=", "specify solution file. the 'packages' directory will be placed at the solution directory, and the 'packages.config' file will be placed at the project directory.", s => slnName = s.Some());
-            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s.Some());
-            Options.Add("o=|output-dir=", "specify where the downloaded packages will be saved to.[default=./packages]", s => target = s.Some());
+            Options.Add("s=|sln=", "specify solution file. the 'packages' directory will be placed at the solution directory, and the 'packages.config' file will be placed at the project directory.", s => slnName = s);
+            Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s);
+            Options.Add("o=|output-dir=", "specify where the downloaded packages will be saved to. [default=./packages]", s => target = s);
             
             Options.Add("custom-source=", "use custom NuGet source. only the NuGet v2 endpoint can be used.", p => sourceUrl = p);
             Options.Add("a|allow-prerelease", "use the pre release version of packages, if available.", _ => allowPre = _ != null);
@@ -65,6 +65,34 @@ namespace DNProj
             this.AddExample("$ dnproj nuget install EntityFramework");
             this.AddExample("$ dnproj nuget install EntityFramework --config ../packages.config --output-dir ../packages ");
             this.AddExample("$ dnproj nuget install EntityFramework:5.0.0 --sln ../ConsoleApplication1.sln");
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions
+            (
+                args,
+                i =>
+                {
+                    switch(i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        case "-s":
+                        case "--sln":
+                            return CommandSuggestion.Files("*sln");
+                        case "-c":
+                        case "--config":
+                            return CommandSuggestion.Files("packages.config");
+                        case "-o":
+                        case "--output-dir":
+                            return CommandSuggestion.Directories();
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                }
+            );
         }
 
         public override void Run(IEnumerable<string> args)
@@ -150,7 +178,7 @@ namespace DNProj
                         var id = name;
                         if (name.Contains(":"))
                         {
-                            version = name.Split(':')[1].Some();
+                            version = name.Split(':')[1];
                             id = name.Split(':')[0];
                         }
 
@@ -162,7 +190,7 @@ namespace DNProj
                             pm.Logger.Indents += 2;
                             Console.WriteLine("* installing depending packages...");
                             foreach (var pkg in pkgs)
-                                pm.InstallPackageWithValidation(fn, pkg.Id, pkg.Version.Some(), allow40, allowPre);
+                                pm.InstallPackageWithValidation(fn, pkg.Id, pkg.Version, allow40, allowPre);
                             pm.Logger.Indents -= 2;
                         });
                     }

@@ -37,7 +37,25 @@ namespace DNProj
             : base("dnproj edit", "edit files and references with $EDITOR.\nyou can add, remove, and reorder multiple items at once.", "edit files and references with editor.", "[options]")
         {
             Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
-            Options.Add("e=|editor=", "specify editor.", e => editor = e.Some());
+            Options.Add("e=|editor=", "specify editor.", e => editor = e);
+        }
+
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions(
+                args,
+                i =>
+                {
+                    switch (i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                }
+            );
         }
 
         public override void Run(IEnumerable<string> args)
@@ -84,7 +102,7 @@ namespace DNProj
             }
             else
             {
-                var ed = (editor || Shell.GetUnixEnvironmentVariable("EDITOR").Some())
+                var ed = (editor || Shell.GetUnixEnvironmentVariable("EDITOR"))
                     .Match(x =>
                     {
                         if (string.IsNullOrEmpty(x))

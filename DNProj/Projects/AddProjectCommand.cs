@@ -49,10 +49,30 @@ build actions:
             this.AddExample("$ dnproj add A.cs B.png:EmbeddedResource C.txt:None");
         }
 
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        {
+            return this.GenerateSuggestions(
+                args,
+                i =>
+                {
+                    switch (i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        default:
+                            return CommandSuggestion.None;
+                    }
+                },
+                () => CommandSuggestion.Files(),
+                xs => CommandSuggestion.Files()
+            );
+        }
+
         public override void Run(IEnumerable<string> args)
         {
             var p = this.LoadProject(ref args, ref projName);
-            if(!args.Any())
+            if (!args.Any())
             {
                 Report.Error("file(s) not specified.");
                 Console.WriteLine();
@@ -70,7 +90,7 @@ build actions:
                         fn = f.Replace(":" + x, "");
                         break;
                     }
-                    else if(x == "None" && f.Contains(":") && !f.EndsWith(":"))
+                    else if (x == "None" && f.Contains(":") && !f.EndsWith(":"))
                     {
                         act = f.Split(':').Last();
                         fn = f.Replace(":" + act, "");
