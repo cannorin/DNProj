@@ -58,7 +58,7 @@ namespace DNProj
 
         static string escape(string s)
         {
-            return s.Replace("'", "'\"'\"'").Replace(":", "\\:");
+            return s.Replace("'", "'\"'\"'").Replace(":", "\\:").Replace("\\", "\\\\");
         }
 
         public static CommandSuggestion Values(IEnumerable<string> args)
