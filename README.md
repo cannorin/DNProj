@@ -3,7 +3,7 @@ DNProj
 
 [![Build Status](https://travis-ci.org/cannorin/DNProj.svg?branch=master)](https://travis-ci.org/cannorin/DNProj)
 
-Manage your .\*proj and .sln with commandline.
+Manage your .\*proj and .sln from commandline.
 
 # dnproj
 
@@ -114,6 +114,11 @@ Just type:
 ```bash
 PREFIX=/path/to/your/destination make install
 ```
+# zsh completion
+
+Copy ```misc/zsh-completion/_dnproj``` to your ```$FPATH```.
+
+Make sure ```dnproj``` is in your ```$PATH``` before use.
 
 # license
 
