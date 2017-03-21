@@ -53,7 +53,7 @@ build actions:
             this.AddExample("$ dnproj add NewFile.cs --template csharp");
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions(
                 args,
@@ -71,13 +71,13 @@ build actions:
                             return CommandSuggestion.None;
                     }
                 },
-                () => 
+                () =>
                 {
                     if(!args.Contains("-t") && !args.Contains("--template"))
                         return CommandSuggestion.Files();
                     else return CommandSuggestion.None;
                 },
-                __ => 
+                __ =>
                 {
                     if(!args.Contains("-t") && !args.Contains("--template"))
                         return CommandSuggestion.Files();
@@ -120,7 +120,7 @@ build actions:
                             goto skip;
                         }
                     }
-                
+                 
                 if(temp.HasValue)
                 {
                     if (args.Count() > 1)

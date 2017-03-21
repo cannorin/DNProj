@@ -81,9 +81,8 @@ $ dnproj conf rm-group -i 2"
                         var val = args.Count() > 1 ? args.Skip(1).JoinToString(" ") : "";
 
                         if (g.Cast<BuildProperty>().Any(x => x.Name == name))
-                            g.SetProperty(name, val);
-                        else
-                            g.AddNewProperty(name, val);
+                            g.RemoveProperty(name);
+                        g.AddNewProperty(name, val);
                     }
                     printPropertyGroup(g, Groups(p).IndexOf(g));
                     p.Save(p.FullFileName);
@@ -182,7 +181,7 @@ $ dnproj conf rm-group -i 2"
                 }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions(
                 args,
@@ -203,11 +202,12 @@ $ dnproj conf rm-group -i 2"
                         default:
                             return CommandSuggestion.None;
                     }
-                }
+                },
+                incompleteInput: incompleteInput
             );
         }
 
-        public override IEnumerable<CommandSuggestion> GetChildSuggestions(ChildCommand child, IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetChildSuggestions(ChildCommand child, IEnumerable<string> args, Option<string> incompleteOption = default(Option<string>))
         {
             switch(child.Name.Split(' ').Last())
             {

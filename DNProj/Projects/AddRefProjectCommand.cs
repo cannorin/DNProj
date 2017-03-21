@@ -50,7 +50,7 @@ you can add multiple references at once, when neither --cond nor --hint is used.
             this.AddWarning("you must escape the dollar sign '$' inside \"\" as \"\\$\", or use '' instead.");
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions(
                 args,

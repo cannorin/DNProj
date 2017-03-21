@@ -45,10 +45,11 @@ namespace DNProj
     {
         Option<FrameworkName> alt;
 
-        public DNPackageManager(IPackageRepository repo, string path)
+        public DNPackageManager(IPackageRepository repo, string path, bool verbose = false)
             : base(repo, path)
         {
             this.Logger = new NuGetLogger();
+            this.Verbose = verbose;
             this.PackageInstalled += (sender, e) => {};
             this.PackageInstalling += (sender, e) => {};
             base.PackageInstalled += (sender, e) => 
@@ -76,19 +77,22 @@ namespace DNProj
             }
         }
 
+        public bool Verbose { get; set; }
+
         public new event EventHandler<DNPackageOperationEventArgs> PackageInstalled;
 
         public new event EventHandler<DNPackageOperationEventArgs> PackageInstalling;
 
-        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<string> version = default(Option<string>), bool allowLowerFw = false, bool allowPre = false, bool force = false)
+        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<string> version = default(Option<string>), bool allowPre = false, bool force = false)
         {
-            return InstallPackageWithValidation(fn, id, version.Map(SemanticVersion.Parse), allowLowerFw, allowPre, force);
+            return InstallPackageWithValidation(fn, id, version.Map(SemanticVersion.Parse), allowPre, force);
         }
 
-        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<SemanticVersion> version, bool allowLowerFw = false, bool allowPre = false, bool force = false)
+        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<SemanticVersion> version, bool allowPre = false, bool force = false)
         {
             var repo = this.SourceRepository;
-            Report.WriteLine(this.Logger.Indents, "* resolving '{0}'...", id);
+            if(Verbose)
+                Report.WriteLine(this.Logger.Indents, "* resolving '{0}'...", id);
 
             var p = version.Match(
                 v => repo.FindPackage(id, v),
@@ -103,20 +107,41 @@ namespace DNProj
 
             var sfs = p.GetSupportedFrameworks();
 
-            if (force || (sfs.Any() && !sfs.Contains(fn)))
+            if(Verbose && p.IsSatellitePackage())
+                Report.Info(this.Logger.Indents, "package '{0}' is a satellite package.", id); 
+            else if(Verbose && !sfs.Any())
+                Report.Warning(this.Logger.Indents, "package '{0}' has an empty target framework.", id); 
+            else if (!force && !sfs.Contains(fn))
             {
-                var alto = p.FindAlternativeFramework(fn);    
+                var alto = p.FindLowerCompatibleFramework(fn);    
                 if (alto.HasValue)
                 {
-                    if (allowLowerFw)
+                    alt = alto;
+                    if(Verbose)
+                        Report.Warning(this.Logger.Indents, "package '{0}' doesn't support framework '{1}', using lower compatible version '{2}'...", id, fn, alto.Value);
+                }
+                else if(sfs.Any(x => x.IsPortableFramework()))
+                {
+                    
+                    var psf = 
+                        sfs.Filter(x => x.IsPortableFramework())
+                            .Map(x => new 
+                            { 
+                                Framework = x, 
+                                Profile = NetPortableProfile.Parse(NetPortableProfileTable.Instance, x.Profile, true) 
+                            })
+                            .Find(x => NuGetTools.FindLowerCompatibleFramework(x.Profile.SupportedFrameworks, fn).HasValue);
+                    if (psf.HasValue)
                     {
-                        alt = alto;
-                        Report.Warning(this.Logger.Indents, "package '{0}' doesn't support '{1}', installing '{2}' instead...", id, fn, alto.Value);
+                        alt = psf.Value.Framework;
+                        if(Verbose)
+                            Report.Info(this.Logger.Indents, "package '{0}' is a PCL package, using profile '{1}'.", id, psf.Value.Profile.Name);  
                     }
                     else
                     {
-                        Report.Error(this.Logger.Indents, "package '{0}' doesn't support framework '{1}'.", id, fn.FullName);
-                        Report.Info(this.Logger.Indents, "'--allow-downgrade-framework' to install '{0}' version instead.", alto.Value);
+                        Report.Error(this.Logger.Indents, "package '{0}' is a PCL package, but there is no profile compatible with framework '{1}'.", id, fn.FullName);
+                        Report.Error(this.Logger.Indents, "available profiles are: {0}", sfs.Filter(x => x.IsPortableFramework()).Map(x => x.Profile).JoinToString(", "));
+                        Report.Info(this.Logger.Indents, "'--force' to ignore this error, if needed.");
                         return Option.None;
                     }
                 }
@@ -124,7 +149,16 @@ namespace DNProj
                 {
                     Report.Error(this.Logger.Indents, "package '{0}' doesn't support framework '{1}'.", id, fn.FullName);
                     Report.Error(this.Logger.Indents, "available frameworks are: {0}", sfs.Map(x => string.Format("'{0}'", x)).JoinToString(", "));
-                    Report.Info(this.Logger.Indents, "'--force' to ignore this error, if needed.");
+                    NuGetTools.FindUpperCompatibleFramework(p, fn)
+                        .Match
+                        (
+                            uf => 
+                            {
+                                Report.Info(this.Logger.Indents, "consider upgrading target framework to '{0}'.", uf);
+                                Report.Info(this.Logger.Indents, "> 'dnproj conf set TargetFrameworkVersion \"v{0}\"'", uf.Version);
+                            },
+                            () => Report.Info(this.Logger.Indents, "'--force' to ignore this error, if needed.")
+                        );
                     return Option.None;
                 }
             }
@@ -133,7 +167,7 @@ namespace DNProj
             this.Logger.Indents += 2;
             this.InstallPackage(p, true, allowPre);
             this.Logger.Indents -= 2;
-            Report.WriteLine(this.Logger.Indents, "* successfully installed '{0}'.", p.GetFullName());
+
             return p.Some();
         }
     }
@@ -155,16 +189,70 @@ namespace DNProj
                     .Distinct();
         }
 
-        public static Option<FrameworkName> FindAlternativeFramework(this IPackage p, FrameworkName fn)
+        public static Option<FrameworkName> FindLowerCompatibleFramework(this IPackage p, FrameworkName fn)
         {
             var sfs = p.GetSupportedFrameworks();
+            return FindLowerCompatibleFramework(sfs, fn);
+        }
 
+        public static Option<FrameworkName> FindLowerCompatibleFramework(IEnumerable<FrameworkName> sfs, FrameworkName fn)
+        {
+            if (!sfs.Contains(fn))
+            {
+                return sfs.Find(x => 
+                    x.Identifier == fn.Identifier
+                && x.Version.Major == fn.Version.Major
+                && x.Version.Minor <= fn.Version.Minor
+                && x.Version.Build <= fn.Version.Build
+                );
+            }
+            else
+                return fn.Some();
+        }
+
+        public static IEnumerable<FrameworkName> GetLowerCompatibleFrameworks(IEnumerable<FrameworkName> sfs, FrameworkName fn)
+        {
+            if (!sfs.Contains(fn))
+                return sfs.Filter(x => 
+                    x.Identifier == fn.Identifier 
+                    && x.Version.Major == fn.Version.Major 
+                    && x.Version.Minor <= fn.Version.Minor 
+                    && x.Version.Build <= fn.Version.Build
+                );
+            else
+                return fn.Singleton();
+        }
+
+        public static Option<FrameworkName> FindUpperCompatibleFramework(this IPackage p, FrameworkName fn)
+        {
+            var sfs = p.GetSupportedFrameworks();
+            return FindUpperCompatibleFramework(sfs, fn);
+        }
+
+        public static Option<FrameworkName> FindUpperCompatibleFramework(IEnumerable<FrameworkName> sfs, FrameworkName fn)
+        {
             if (!sfs.Contains(fn))
                 return sfs.Find(x => 
-                    x.Identifier == fn.Identifier && x.Version.Major == fn.Version.Major
+                    x.Identifier == fn.Identifier 
+                    && x.Version.Major == fn.Version.Major 
+                    && x.Version.Minor >= fn.Version.Minor 
+                    && x.Version.Build >= fn.Version.Build
                 );
             else
                 return fn.Some();
+        }
+
+        public static IEnumerable<FrameworkName> GetUpperCompatibleFramework(IEnumerable<FrameworkName> sfs, FrameworkName fn)
+        {
+            if (!sfs.Contains(fn))
+                return sfs.Filter(x => 
+                    x.Identifier == fn.Identifier
+                 && x.Version.Major == fn.Version.Major
+                 && x.Version.Minor >= fn.Version.Minor
+                 && x.Version.Build >= fn.Version.Build
+                );
+            else
+                return fn.Singleton();
         }
 
         public static string GetRepositoryCachePath(this IPackageRepository repo)

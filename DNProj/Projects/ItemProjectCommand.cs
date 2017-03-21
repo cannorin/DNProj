@@ -227,7 +227,7 @@ build actions:
                 }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions(
                 args,
@@ -248,11 +248,12 @@ build actions:
                         default:
                             return CommandSuggestion.None;
                     }
-                }
+                },
+                incompleteInput: incompleteInput
             );
         }
 
-        public override IEnumerable<CommandSuggestion> GetChildSuggestions(ChildCommand child, IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetChildSuggestions(ChildCommand child, IEnumerable<string> args, Option<string> incompleteOption = default(Option<string>))
         {
             switch(child.Name.Split(' ').Last())
             {

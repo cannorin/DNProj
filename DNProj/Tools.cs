@@ -97,7 +97,8 @@ namespace DNProj
             }
             else if(args.Length > 0 && args[0] == "--generate-suggestions-incomplete")
             {
-                var ss = new T().GetSuggestions(args.Skip(1).Rev().Skip(1).Rev()).Reduce();
+                var l = args.Last();
+                var ss = new T().GetSuggestions(args.Skip(1).Rev().Skip(1).Rev(), l).Reduce();
                 foreach(var s in ss)
                 {
                     Console.WriteLine(string.Join(" ", s.RawText));

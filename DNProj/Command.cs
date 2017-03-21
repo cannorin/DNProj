@@ -135,12 +135,12 @@ namespace DNProj
             }
         }
 
-        public virtual IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public virtual IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
-            return this.GenerateSuggestions(args);
+            return this.GenerateSuggestions(args, incompleteInput: incompleteInput);
         }
 
-        public virtual IEnumerable<CommandSuggestion> GetChildSuggestions(ChildCommand child, IEnumerable<string> args)
+        public virtual IEnumerable<CommandSuggestion> GetChildSuggestions(ChildCommand child, IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             throw new NotImplementedException("Implement this if your command has subcommands.");
         }
@@ -276,7 +276,7 @@ namespace DNProj
             a(args);
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions(
                 args,

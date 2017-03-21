@@ -49,7 +49,7 @@ namespace DNProj
             this.AddExample("$ dnproj new ConsoleApplication1.csproj -d ConsoleApplication1 -t csharp");
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions(args,
                 i =>

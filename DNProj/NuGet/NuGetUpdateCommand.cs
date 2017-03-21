@@ -39,7 +39,6 @@ namespace DNProj
         Option<string> config;
         string sourceUrl = "https://packages.nuget.org/api/v2";
         bool verbose = false;
-        bool allow40 = false;
         bool recursive = false;
         bool allowPre = false;
         bool force = false;
@@ -55,14 +54,13 @@ if no package names are specified, it will try to) update all the installed pack
             Options.Add("c=|config=", "specify 'packages.config' manually.", s => config = s);
             Options.Add("r|recursive", "update packages' dependencies too.", _ => recursive = _ != null);
             Options.Add("a|allow-prerelease", "use the pre release version of packages, if available.", _ => allowPre = _ != null);
-            Options.Add("d|allow-downgrade-framework", "try installing .NET 4.0 version if the package doesn't support .NET 4.5.", _ => allow40 = _ != null);
             Options.Add("f|force", "ignore all warnings and errors.", _ => force = _ != null);
             Options.Add("v|verbose", "show detailed log.", _ => verbose = _ != null);
 
             this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions
             (
@@ -174,13 +172,10 @@ if no package names are specified, it will try to) update all the installed pack
 
                 pm.PackageInstalling += (sender, e) =>
                 {
-                    var alt = e.Package.FindAlternativeFramework(fn);
-                    if(!force && !e.Package.GetSupportedFrameworks().Contains(fn) && !(allow40 && alt.HasValue))
+                    var alt = e.Package.FindLowerCompatibleFramework(fn);
+                    if(!force && !e.Package.GetSupportedFrameworks().Contains(fn) && !alt.HasValue)
                     {
                         Report.Error(pm.Logger.Indents, "newer version of '{0}' doesn't support framework '{1}', cancelling...", e.Package.Id, fn);
-
-                        if (alt.HasValue)
-                            Report.Info(pm.Logger.Indents, "use '--allow-downgrade-framework' to update to version '{0}', which supports '{1}'.", e.Package.Version, alt.Value);
                         e.Cancel = true;
                     }
                 };
@@ -189,10 +184,14 @@ if no package names are specified, it will try to) update all the installed pack
                 {
                     var pn = e.Package.GetFullName().Replace(' ', '.');
                     var bp = new Uri(proj.FullFileName);
-                    var alt = e.Package.FindAlternativeFramework(fn);
+                    var alt = e.Package.FindLowerCompatibleFramework(fn);
                     e.Package.AssemblyReferences
                         .OrderByDescending(x => x.TargetFramework.Version.Major * 1000 + x.TargetFramework.Version.Minor)
-                        .Find(x => force || x.SupportedFrameworks.Contains(fn) || (allow40 && alt.Map(x.SupportedFrameworks.Contains).Default(false)))
+                        .Find(x => 
+                               force 
+                            || x.SupportedFrameworks.Contains(fn) 
+                            || alt.Map(x.SupportedFrameworks.Contains).Default(false)
+                        )
                         .Match(a =>
                         {
                             conf.GetPackageReferences()

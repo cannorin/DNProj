@@ -41,7 +41,6 @@ namespace DNProj
         Option<string> config;
         string sourceUrl = "https://packages.nuget.org/api/v2";
         bool verbose = false;
-        bool allow40 = false;
         bool allowPre = false;
         bool force = false;
 
@@ -56,7 +55,6 @@ namespace DNProj
             
             Options.Add("custom-source=", "use custom NuGet source. only the NuGet v2 endpoint can be used.", p => sourceUrl = p);
             Options.Add("a|allow-prerelease", "use the pre release version of packages, if available.", _ => allowPre = _ != null);
-            Options.Add("d|allow-downgrade-framework", "try installing .NET 4.0 version if the package doesn't support .NET 4.5.", _ => allow40 = _ != null);
             Options.Add("f|force", "ignore all warnings and errors.", _ => force = _ != null);
 
             Options.Add("v|verbose", "show detailed log.", _ => verbose = _ != null);
@@ -69,7 +67,7 @@ namespace DNProj
             this.AddExample("$ dnproj nuget install EntityFramework:5.0.0 --sln ../ConsoleApplication1.sln");
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions
             (
@@ -98,8 +96,14 @@ namespace DNProj
                 {
                     try
                     {
-                        var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
-                        return CommandSuggestion.Values(repo.GetCachedPackageNames());
+                        return incompleteInput.Match(
+                            i =>
+                            {
+                                var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
+                                return CommandSuggestion.Values(repo.GetCachedPackageNames().Filter(x => x.StartsWith(i)));
+                            },
+                            () => CommandSuggestion.None
+                        );
                     }
                     catch
                     {
@@ -111,8 +115,14 @@ namespace DNProj
                 {
                     try
                     {
-                        var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
-                        return CommandSuggestion.Values(repo.GetCachedPackageNames());
+                        return incompleteInput.Match(
+                            i =>
+                            {
+                                var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
+                                return CommandSuggestion.Values(repo.GetCachedPackageNames().Filter(x => x.StartsWith(i)));
+                            },
+                            () => CommandSuggestion.None
+                        );
                     }
                     catch
                     {
@@ -165,7 +175,7 @@ namespace DNProj
                     // prepare nuget things
                     var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
                     var localrepo = new LocalPackageRepository(path);
-                    var pm = new DNPackageManager(repo, path);
+                    var pm = new DNPackageManager(repo, path, verbose);
 
                     pm.DependencyVersion = DependencyVersion.Lowest;
                     pm.SkipPackageTargetCheck = true;
@@ -177,13 +187,24 @@ namespace DNProj
                         var bp = new Uri(proj.FullFileName);
                         e.Package.AssemblyReferences
                             .OrderByDescending(x => x.TargetFramework.Version.Major * 1000 + x.TargetFramework.Version.Minor)
-                            .Find(x => x.SupportedFrameworks.Contains(fn) || (allow40 && e.AlternativeFramework.Map(x.SupportedFrameworks.Contains).Default(false)))
+                            .Find(x => 
+                                   x.SupportedFrameworks.Contains(fn) 
+                                || e.AlternativeFramework.Map(x.SupportedFrameworks.Contains).Default(false)
+                                || force
+                            )
                             .Match(a =>
                             {
-                                if(a.SupportedFrameworks.Contains(fn))
-                                    conf.AddEntry(e.Package.Id, e.Package.Version, false, fn);
-                                else
-                                    conf.AddEntry(e.Package.Id, e.Package.Version, false, e.AlternativeFramework.Value);
+                                var tgfn =
+                                    a.SupportedFrameworks.Contains(fn) 
+                                    ? fn 
+                                    : e.AlternativeFramework.HasValue
+                                      ? e.AlternativeFramework.Value
+                                      : force
+                                        ? a.TargetFramework
+                                        : null;
+
+                                conf.AddEntry(e.Package.Id, e.Package.Version, false, tgfn);
+
                                 var absp = new Uri(Path.Combine(path, Path.Combine(pn, a.Path)));
                                 var rp = bp.MakeRelativeUri(absp).ToString();
                                 var an = Assembly.LoadFile(absp.AbsolutePath).GetName().Name;
@@ -191,16 +212,45 @@ namespace DNProj
                                     Report.WriteLine(pm.Logger.Indents, "Adding reference to '{0}, HelpPath={1}'.", an, rp);
                                 var i = proj.ReferenceItemGroup().AddNewItem("Reference", an);
                                 i.SetMetadata("HintPath", rp);
+
+                                if(!verbose && fn == tgfn)
+                                    Report.WriteLine(pm.Logger.Indents - 2, "* successfully installed '{0}'.", e.Package.GetFullName());
+                                else if(!verbose)
+                                    Report.WriteLine(pm.Logger.Indents - 2, "* successfully installed '{0}' (TargetFramework='{1}').", e.Package.GetFullName(), tgfn);
                             },
                             () => 
                             {
                                 if(!force)
                                 {
-                                    Report.Error(pm.Logger.Indents, "no assemblies to install found in '{0}', cancelling.", e);
-                                    Report.Info(pm.Logger.Indents, "'--force' to ignore this error, if needed.");
-                                    var lpm = new PackageManager(localrepo, path);
-                                    lpm.UninstallPackage(e.Package, true);
-                                    e.Cancel = true;
+                                    if(e.Package.AssemblyReferences.Any())
+                                    {
+                                        Report.Error(pm.Logger.Indents, "no assemblies in '{0}' supports framework '{1}', cancelling.", e.Package.GetFullName(), fn);
+                                        Report.Error(pm.Logger.Indents, "supported frameworks are: {0}", e.Package.AssemblyReferences.Map(x => x.TargetFramework).JoinToString(", "));
+                                        NuGetTools.FindUpperCompatibleFramework(e.Package, fn)
+                                                  .Match
+                                        (
+                                            uf => 
+                                            {
+                                                Report.Info(pm.Logger.Indents, "consider upgrading target framework to '{0}'.", uf);
+                                                Report.Info(pm.Logger.Indents, "> 'dnproj conf set TargetFrameworkVersion \"v{0}\"'", uf.Version);
+                                            },
+                                            () => Report.Info(pm.Logger.Indents, "'--force' to ignore this error, if needed.")
+                                        );
+                                        var lpm = new PackageManager(localrepo, path);
+                                        lpm.UninstallPackage(e.Package, true);
+                                        e.Cancel = true;
+                                        Environment.Exit(1);
+                                    }
+                                    else
+                                    {
+                                        Report.Warning(pm.Logger.Indents, "no assemblies to install found in '{0}', ignoring.", e.Package.GetFullName());
+                                        conf.AddEntry(e.Package.Id, e.Package.Version);
+                                    }
+                                }
+                                else
+                                {
+                                    Report.Warning(pm.Logger.Indents, "no assemblies to install found in '{0}', ignoring.", e.Package.GetFullName());
+                                    conf.AddEntry(e.Package.Id, e.Package.Version);
                                 }
                             });
                     };
@@ -216,15 +266,33 @@ namespace DNProj
                             id = name.Split(':')[0];
                         }
 
-                        var p = pm.InstallPackageWithValidation(fn, id, version, allow40, allowPre, force);
+                        var p = pm.InstallPackageWithValidation(fn, id, version, allowPre, force);
 
+                        if(!p.HasValue)
+                            Environment.Exit(1);
+                        
                         p.Map(x => NuGetTools.ResolveDependencies(x, fn, repo))
                          .May(pkgs =>
                         {
                             pm.Logger.Indents += 2;
                             Console.WriteLine("* installing depending packages...");
-                            foreach (var pkg in pkgs)
-                                pm.InstallPackageWithValidation(fn, pkg.Id, pkg.Version, allow40, allowPre, force);
+                            if(pkgs.Map(pkg => pm.InstallPackageWithValidation(fn, pkg.Id, pkg.Version, allowPre, force)).Any(x => !x.HasValue))
+                            {
+                                Console.WriteLine("* removing broken installed packages...");
+                                var lpm = new PackageManager(localrepo, path);
+
+                                Console.WriteLine("* removing '{0}'...", p.Value.Id);
+                                lpm.UninstallPackage(p.Value, true);
+                                conf.DeleteEntry(p.Value.Id, p.Value.Version);
+
+                                pkgs.Try(x => x.Iter(y => 
+                                {
+                                    Console.WriteLine("* removing '{0}'...", y.Id);
+                                    lpm.UninstallPackage(y, true);
+                                    conf.DeleteEntry(y.Id, y.Version);
+                                }));
+                                Environment.Exit(1);
+                            }
                             pm.Logger.Indents -= 2;
                         });
                     }

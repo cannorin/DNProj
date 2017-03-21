@@ -34,7 +34,7 @@ namespace DNProj
             var dccond = string.Format("'$(Configuration)|$(Platform)' == '{0}'", dc);
             var rccond = string.Format("'$(Configuration)|$(Platform)' == '{0}'", rc);
             var ps = p.PropertyGroups.Cast<BuildPropertyGroup>();
-            var pgd = ps.Try(xs => xs.First(x => x.Condition.WeakEquals(dccond))).DefaultLazy(() =>
+            var pgd = ps.Find(x => x.Condition.WeakEquals(dccond)).DefaultLazy(() =>
             {
                 var pg = p.AddNewPropertyGroup(false);
                 pg.Condition = dccond;
@@ -50,7 +50,7 @@ namespace DNProj
                 return pg;
             });
 
-            var pgr = ps.Try(xs => xs.First(x => x.Condition.WeakEquals(rccond))).DefaultLazy(() =>
+            var pgr = ps.Find(x => x.Condition.WeakEquals(rccond)).DefaultLazy(() =>
             {
                 var pg = p.AddNewPropertyGroup(false);
                 pg.Condition = rccond;
@@ -69,14 +69,14 @@ namespace DNProj
         public static BuildItemGroup SourceItemGroup(this Project p)
         {
             return p.ItemGroups.Cast<BuildItemGroup>()
-                .Try(xs => xs.First(x => !x.ToArray().Any() || x.ToArray().Any(b => Templates.BuildItems.Contains(b.Name))))
+                .Find(x => !x.ToArray().Any() || x.ToArray().Any(b => Templates.BuildItems.Contains(b.Name)))
                 .DefaultLazy(p.AddNewItemGroup);
         }
 
         public static BuildItemGroup ReferenceItemGroup(this Project p)
         {
             return p.ItemGroups.Cast<BuildItemGroup>()
-                .Try(xs => xs.First(x => !x.ToArray().Any() || x.ToArray().Any(b => b.Name == "Reference")))
+                .Find(x => !x.ToArray().Any() || x.ToArray().Any(b => b.Name == "Reference"))
                 .DefaultLazy(p.AddNewItemGroup); 
         }
 
@@ -89,7 +89,8 @@ namespace DNProj
         public static BuildProperty DefaultConfiguration(this Project p)
         {
             return p.PropertyGroups.Cast<BuildPropertyGroup>()
-                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition.Replace(" ", "") == "'$(Configuration)'==''"))
+                .SelectMany(x => x.Cast<BuildProperty>())
+                .Find(x => x.Condition.Replace(" ", "") == "'$(Configuration)'==''")
                 .DefaultLazy(() =>
             {
                 var defcond = p.AssemblyPropertyGroup().AddNewProperty("Configuration", "Debug");
@@ -101,7 +102,8 @@ namespace DNProj
         public static BuildProperty DefaultTarget(this Project p)
         {
             return p.PropertyGroups.Cast<BuildPropertyGroup>()
-                .Try(xs => xs.SelectMany(x => x.Cast<BuildProperty>()).First(x => x.Condition.Replace(" ", "") == "'$(Platform)'==''"))
+                .SelectMany(x => x.Cast<BuildProperty>())
+                .Find(x => x.Condition.Replace(" ", "") == "'$(Platform)'==''")
                 .DefaultLazy(() =>
             {
                 var defarch = p.AssemblyPropertyGroup().AddNewProperty("Platform", "AnyCPU");
@@ -122,12 +124,18 @@ namespace DNProj
 
         public static IEnumerable<BuildItem> BuildItems(this Project p)
         {
-            return p.ItemGroups.Cast<BuildItemGroup>().Filter(xs => !xs.IsImported).SelectMany(xs => xs.Cast<BuildItem>()).Filter(x => Templates.BuildItems.Contains(x.Name));
+            return p.ItemGroups.Cast<BuildItemGroup>()
+                .Filter(xs => !xs.IsImported)
+                .SelectMany(xs => xs.Cast<BuildItem>())
+                .Filter(x => Templates.BuildItems.Contains(x.Name));
         }
 
         public static IEnumerable<BuildItem> ReferenceItems(this Project p)
         {
-            return p.ItemGroups.Cast<BuildItemGroup>().Filter(xs => !xs.IsImported).SelectMany(xs => xs.Cast<BuildItem>()).Filter(x => x.Name == "Reference");
+            return p.ItemGroups.Cast<BuildItemGroup>()
+                .Filter(xs => !xs.IsImported)
+                .SelectMany(xs => xs.Cast<BuildItem>())
+                .Filter(x => x.Name == "Reference");
         }
 
         public static Option<string> GetAbsoluteHintPath(this BuildItem i)

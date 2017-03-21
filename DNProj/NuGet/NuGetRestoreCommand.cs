@@ -52,7 +52,7 @@ namespace DNProj
             this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions
             (
@@ -120,7 +120,7 @@ namespace DNProj
                 // prepare nuget things
                 var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
                 var localrepo = new LocalPackageRepository(path);
-                var pm = new DNPackageManager(repo, path);
+                var pm = new DNPackageManager(repo, path, verbose);
                 pm.DependencyVersion = DependencyVersion.Lowest;
                 pm.SkipPackageTargetCheck = true;
                 pm.Logger.IsSilent = !verbose;
@@ -170,7 +170,7 @@ namespace DNProj
                     if(!localrepo.Exists(pr.Id, pr.Version))
                     {
                         Console.WriteLine("* restoring '{0}'...", pr.Id);
-                        pm.InstallPackageWithValidation(fn, pr.Id, pr.Version, true, true, true);
+                        pm.InstallPackageWithValidation(fn, pr.Id, pr.Version, true, true);
                     }
                     else
                         Report.Warning("'{0}' is already installed, skipping...", pr.Id);

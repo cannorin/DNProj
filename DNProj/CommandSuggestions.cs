@@ -63,7 +63,9 @@ namespace DNProj
 
         public static CommandSuggestion Values(IEnumerable<string> args)
         {
-            return new CommandSuggestion(New.Seq("_values", "'values'").Concat(mapQuote(args)).ToArray());
+            if (args.Count() == 0)
+                return CommandSuggestion.None;
+            else return new CommandSuggestion(New.Seq("_values", "'values'").Concat(mapQuote(args)).ToArray());
         }
 
         public static CommandSuggestion Values(params string[] args)
@@ -151,7 +153,8 @@ namespace DNProj
             IEnumerable<string> args,
             Func<string, CommandSuggestion> incompleteOption = null,
             Func<CommandSuggestion> noArgs = null,
-            Func<string[], CommandSuggestion> withArgs = null
+            Func<string[], CommandSuggestion> withArgs = null,
+            Option<string> incompleteInput = default(Option<string>)
         )
         {
             var _rs = c.Options.Try(xs => xs.Parse(args));
@@ -201,7 +204,7 @@ namespace DNProj
                         }
                     }
                     if (c.Commands.Keys.Contains(rs[0]))
-                        foreach (var o in c.Commands[rs[0]].GetSuggestions(rs.Skip(1)))
+                        foreach (var o in c.Commands[rs[0]].GetSuggestions(rs.Skip(1), incompleteInput))
                             yield return o;
                     else if (withArgs != null)
                         yield return withArgs(rs);

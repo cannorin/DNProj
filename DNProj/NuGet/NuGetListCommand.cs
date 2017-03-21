@@ -48,7 +48,7 @@ namespace DNProj
             this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions
             (

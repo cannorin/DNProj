@@ -36,7 +36,7 @@ namespace DNProj
             Options.Add("p=|proj=", "specify project file explicitly.", p => projName = p);
         }
 
-        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
+        public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
         {
             return this.GenerateSuggestions(
                 args,
