@@ -2,7 +2,11 @@
 
 _dnproj() {
     local context state linex
-    local lines=$(dnproj --generate-suggestions "${words[@]:1}")
+    if [[ -n $words[-1] ]]; then
+        local lines=$(dnproj --generate-suggestions-incomplete "${words[@]:1}")
+    else
+        local lines=$(dnproj --generate-suggestions "${words[@]:1}")
+    fi
     for cmd in $lines; do
         eval $cmd;
     done
