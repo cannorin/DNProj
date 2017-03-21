@@ -80,12 +80,12 @@ namespace DNProj
 
         public new event EventHandler<DNPackageOperationEventArgs> PackageInstalling;
 
-        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<string> version = default(Option<string>), bool allowLowerFw = false, bool allowPre = false)
+        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<string> version = default(Option<string>), bool allowLowerFw = false, bool allowPre = false, bool force = false)
         {
-            return InstallPackageWithValidation(fn, id, version.Map(SemanticVersion.Parse), allowLowerFw, allowPre);
+            return InstallPackageWithValidation(fn, id, version.Map(SemanticVersion.Parse), allowLowerFw, allowPre, force);
         }
 
-        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<SemanticVersion> version, bool allowLowerFw = false, bool allowPre = false)
+        public Option<IPackage> InstallPackageWithValidation(FrameworkName fn, string id, Option<SemanticVersion> version, bool allowLowerFw = false, bool allowPre = false, bool force = false)
         {
             var repo = this.SourceRepository;
             Report.WriteLine(this.Logger.Indents, "* resolving '{0}'...", id);
@@ -103,8 +103,7 @@ namespace DNProj
 
             var sfs = p.GetSupportedFrameworks();
 
-                
-            if (!sfs.Contains(fn))
+            if (force || (sfs.Any() && !sfs.Contains(fn)))
             {
                 var alto = p.FindAlternativeFramework(fn);    
                 if (alto.HasValue)
@@ -125,6 +124,7 @@ namespace DNProj
                 {
                     Report.Error(this.Logger.Indents, "package '{0}' doesn't support framework '{1}'.", id, fn.FullName);
                     Report.Error(this.Logger.Indents, "available frameworks are: {0}", sfs.Map(x => string.Format("'{0}'", x)).JoinToString(", "));
+                    Report.Info(this.Logger.Indents, "'--force' to ignore this error, if needed.");
                     return Option.None;
                 }
             }
@@ -213,7 +213,7 @@ namespace DNProj
 
         public void Log(MessageLevel level, string message, params object[] args)
         {
-            if (Filter.HasValue && (Filter.Value(string.Format(message, args)) == false))
+            if (Filter.Check(x => x(string.Format(message, args)) == false))
                 return;
             
             switch (level)

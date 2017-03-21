@@ -43,6 +43,7 @@ namespace DNProj
         bool verbose = false;
         bool allow40 = false;
         bool allowPre = false;
+        bool force = false;
 
         public NuGetInstallCommand()
             : base("dnproj nuget install",
@@ -56,7 +57,8 @@ namespace DNProj
             Options.Add("custom-source=", "use custom NuGet source. only the NuGet v2 endpoint can be used.", p => sourceUrl = p);
             Options.Add("a|allow-prerelease", "use the pre release version of packages, if available.", _ => allowPre = _ != null);
             Options.Add("d|allow-downgrade-framework", "try installing .NET 4.0 version if the package doesn't support .NET 4.5.", _ => allow40 = _ != null);
-            
+            Options.Add("f|force", "ignore all warnings and errors.", _ => force = _ != null);
+
             Options.Add("v|verbose", "show detailed log.", _ => verbose = _ != null);
 
             this.AddTips("when both of --sln and --output-dir are used at the same time, the latter will be ignored.\nwhen --config is used, it will be preferred even if --sln is used too.");
@@ -207,7 +209,7 @@ namespace DNProj
                             id = name.Split(':')[0];
                         }
 
-                        var p = pm.InstallPackageWithValidation(fn, id, version, allow40, allowPre);
+                        var p = pm.InstallPackageWithValidation(fn, id, version, allow40, allowPre, force);
 
                         p.Map(x => NuGetTools.ResolveDependencies(x, fn, repo))
                          .May(pkgs =>
@@ -215,7 +217,7 @@ namespace DNProj
                             pm.Logger.Indents += 2;
                             Console.WriteLine("* installing depending packages...");
                             foreach (var pkg in pkgs)
-                                pm.InstallPackageWithValidation(fn, pkg.Id, pkg.Version, allow40, allowPre);
+                                pm.InstallPackageWithValidation(fn, pkg.Id, pkg.Version, allow40, allowPre, force);
                             pm.Logger.Indents -= 2;
                         });
                     }
