@@ -56,20 +56,20 @@ using System.Runtime.CompilerServices;
 ", name);
         }
 
-        public static string GenerateLibraryClass(string name)
+        public static string GenerateLibraryClass(string name, string className = "MyClass")
         {
             return string.Format(@"﻿using System;
 
 namespace {0} 
 {{
-    public class MyClass
+    public class {1}
     {{
-        public MyClass()
+        public {1}()
         {{
         }}
     }}
 }}
-", name);
+", name, className);
         }
 
         public static string GenerateExeClass(string name)
@@ -109,12 +109,12 @@ open System.Runtime.CompilerServices
 ", name);
         }
 
-        public static string GenerateLibraryFSharp(string name)
+        public static string GenerateLibraryFSharp(string name, string className = "Class1")
         {
             return string.Format(@"namespace {0}
 
-type Class1() = 
-  member this.X = ""F#""", name);
+type {1}() = 
+  member this.X = ""F#""", name, className);
         }
 
         public static string GenerateExeFSharp()

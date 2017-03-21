@@ -42,6 +42,7 @@ namespace DNProj
         bool allow40 = false;
         bool recursive = false;
         bool allowPre = false;
+        bool force = false;
 
         public NuGetUpdateCommand(string name)
             : base(name,
@@ -55,6 +56,7 @@ if no package names are specified, it will try to) update all the installed pack
             Options.Add("r|recursive", "update packages' dependencies too.", _ => recursive = _ != null);
             Options.Add("a|allow-prerelease", "use the pre release version of packages, if available.", _ => allowPre = _ != null);
             Options.Add("d|allow-downgrade-framework", "try installing .NET 4.0 version if the package doesn't support .NET 4.5.", _ => allow40 = _ != null);
+            Options.Add("f|force", "ignore all warnings and errors.", _ => force = _ != null);
             Options.Add("v|verbose", "show detailed log.", _ => verbose = _ != null);
 
             this.AddTips("when --config is not used, dnproj will try to use a 'packages.config'\nin the same directory as your project file.");
@@ -129,9 +131,6 @@ if no package names are specified, it will try to) update all the installed pack
                 var conf = new PackageReferenceFile(config.Map(Path.GetFullPath)
                     .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config")));
 
-                if(!File.Exists(conf.FullPath))
-                    Report.Fatal("'{0}' does not exist.", conf);
-                
                 var path = proj.ReferenceItems()
                     .Choose(ProjectTools.GetAbsoluteHintPath)
                     .Head()
@@ -139,7 +138,7 @@ if no package names are specified, it will try to) update all the installed pack
                     .Flatten()
                     .Map(x => x.FullName).AbortNone(() =>
                         Report.Fatal("there are no installed packages.")
-                                       );
+                );
 
                 // read proj to get fn
                 var apg = proj.AssemblyPropertyGroup().Cast<BuildProperty>();
@@ -176,7 +175,7 @@ if no package names are specified, it will try to) update all the installed pack
                 pm.PackageInstalling += (sender, e) =>
                 {
                     var alt = e.Package.FindAlternativeFramework(fn);
-                    if(!e.Package.GetSupportedFrameworks().Contains(fn) && !(allow40 && alt.HasValue))
+                    if(!force && !e.Package.GetSupportedFrameworks().Contains(fn) && !(allow40 && alt.HasValue))
                     {
                         Report.Error(pm.Logger.Indents, "newer version of '{0}' doesn't support framework '{1}', cancelling...", e.Package.Id, fn);
 
@@ -193,7 +192,7 @@ if no package names are specified, it will try to) update all the installed pack
                     var alt = e.Package.FindAlternativeFramework(fn);
                     e.Package.AssemblyReferences
                         .OrderByDescending(x => x.TargetFramework.Version.Major * 1000 + x.TargetFramework.Version.Minor)
-                        .Find(x => x.SupportedFrameworks.Contains(fn) || (allow40 && alt.Map(x.SupportedFrameworks.Contains).Default(false)))
+                        .Find(x => force || x.SupportedFrameworks.Contains(fn) || (allow40 && alt.Map(x.SupportedFrameworks.Contains).Default(false)))
                         .Match(a =>
                         {
                             conf.GetPackageReferences()
@@ -206,8 +205,11 @@ if no package names are specified, it will try to) update all the installed pack
                                 });
                             if(a.SupportedFrameworks.Contains(fn))
                                 conf.AddEntry(e.Package.Id, e.Package.Version, false, fn);
-                            else
+                            else if(alt.HasValue)
                                 conf.AddEntry(e.Package.Id, e.Package.Version, false, alt.Value);
+                            else if(force)
+                                conf.AddEntry(e.Package.Id, e.Package.Version, false, a.TargetFramework);
+                            
                             var absp = new Uri(Path.Combine(path, Path.Combine(pn, a.Path)));
                             var rp = bp.MakeRelativeUri(absp).ToString();
                             var an = Assembly.LoadFile(absp.AbsolutePath).GetName().Name;

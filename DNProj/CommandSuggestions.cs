@@ -186,6 +186,20 @@ namespace DNProj
                 else
                 {
                     var rs = _rs.Value.ToArray();
+                    foreach (var o in c.Options)
+                    {
+                        var os = o.GetNames().Map(x => (x.Length == 1 ? "-" : "--") + x);
+                        if (!o.Hidden && !os.Any(args.Contains))
+                        {
+                            var desc = o.Description.Split(true, ". ", ", ")[0];
+                            if (desc.EndsWith("."))
+                                desc = desc.Remove(desc.Length - 1);
+                            yield return CommandSuggestion.Option(
+                                desc,
+                                os
+                            );
+                        }
+                    }
                     if (c.Commands.Keys.Contains(rs[0]))
                         foreach (var o in c.Commands[rs[0]].GetSuggestions(rs.Skip(1)))
                             yield return o;

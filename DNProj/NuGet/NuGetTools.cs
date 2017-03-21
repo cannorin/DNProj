@@ -91,9 +91,9 @@ namespace DNProj
             Report.WriteLine(this.Logger.Indents, "* resolving '{0}'...", id);
 
             var p = version.Match(
-                        v => repo.FindPackage(id, v),
-                        () => repo.FindPackage(id)
-                    );
+                v => repo.FindPackage(id, v),
+                () => repo.FindPackage(id)
+            );
 
             if (p == null)
             {
@@ -133,6 +133,7 @@ namespace DNProj
             this.Logger.Indents += 2;
             this.InstallPackage(p, true, allowPre);
             this.Logger.Indents -= 2;
+            Report.WriteLine(this.Logger.Indents, "* successfully installed '{0}'.", p.GetFullName());
             return p.Some();
         }
     }

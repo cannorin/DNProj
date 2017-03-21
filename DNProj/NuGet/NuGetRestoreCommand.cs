@@ -170,7 +170,7 @@ namespace DNProj
                     if(!localrepo.Exists(pr.Id, pr.Version))
                     {
                         Console.WriteLine("* restoring '{0}'...", pr.Id);
-                        pm.InstallPackageWithValidation(fn, pr.Id, pr.Version, true, true);
+                        pm.InstallPackageWithValidation(fn, pr.Id, pr.Version, true, true, true);
                     }
                     else
                         Report.Warning("'{0}' is already installed, skipping...", pr.Id);

@@ -164,6 +164,7 @@ namespace DNProj
 
                     // prepare nuget things
                     var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
+                    var localrepo = new LocalPackageRepository(path);
                     var pm = new DNPackageManager(repo, path);
 
                     pm.DependencyVersion = DependencyVersion.Lowest;
@@ -193,8 +194,14 @@ namespace DNProj
                             },
                             () => 
                             {
-                                Report.Error(pm.Logger.Indents, "no assemblies to install found in '{0}', cancelling.", e);
-                                e.Cancel = true;
+                                if(!force)
+                                {
+                                    Report.Error(pm.Logger.Indents, "no assemblies to install found in '{0}', cancelling.", e);
+                                    Report.Info(pm.Logger.Indents, "'--force' to ignore this error, if needed.");
+                                    var lpm = new PackageManager(localrepo, path);
+                                    lpm.UninstallPackage(e.Package, true);
+                                    e.Cancel = true;
+                                }
                             });
                     };
 

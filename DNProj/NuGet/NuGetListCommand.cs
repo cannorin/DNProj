@@ -77,9 +77,6 @@ namespace DNProj
             var confPath = config.Map(Path.GetFullPath)
                 .Default(Path.Combine(Path.GetDirectoryName(proj.FullFileName), "packages.config"));
 
-            if(!File.Exists(confPath))
-                Report.Fatal("'{0}' does not exist.", confPath);
-
             var conf = new PackageReferenceFile(confPath);
 
             // find packages/
