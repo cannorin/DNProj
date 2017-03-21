@@ -95,7 +95,7 @@ namespace DNProj
             }
             foreach (var s in args)
                 g.Cast<BuildItem>()
-                    .Try(xs => xs.First(x => x.Include == s))
+                    .Find(x => x.Include == s)
                     .Match(
                     g.RemoveItem, 
                     () => Report.Fatal("item with name '{0}' doesn't exist.", s)

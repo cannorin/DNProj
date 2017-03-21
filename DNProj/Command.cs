@@ -278,7 +278,12 @@ namespace DNProj
 
         public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args)
         {
-            return p.GetChildSuggestions(this, args);
+            return this.GenerateSuggestions(
+                args,
+                i => p.GetSuggestions(i.Singleton()).Merge(),
+                () => p.GetChildSuggestions(this, Enumerable.Empty<string>()).Merge(),
+                _args => p.GetChildSuggestions(this, _args).Merge()
+            );
         }
 
         public override void Help(IEnumerable<string> args)

@@ -53,6 +53,7 @@ namespace DNProj
             this.PackageInstalling += (sender, e) => {};
             base.PackageInstalled += (sender, e) => 
             {
+                this.SourceRepository.UpdatePackageNamesCache(e.Package.Singleton());
                 var _e = new DNPackageOperationEventArgs(e.Package, e.FileSystem, e.InstallPath, alt);
                 this.PackageInstalled(sender, _e);
             };
@@ -163,6 +164,34 @@ namespace DNProj
                 );
             else
                 return fn.Some();
+        }
+
+        public static string GetRepositoryCachePath(this IPackageRepository repo)
+        {
+            var n = repo.Source.Replace(":", "_").Replace("/", "_").Replace(":", "_");
+            return Path.Combine(Path.GetTempPath(), n + ".cache");
+        }
+
+        public static void UpdatePackageNamesCache(this IPackageRepository repo, IEnumerable<IPackage> ps)
+        {
+            try
+            {
+                var p = repo.GetRepositoryCachePath();
+                if (!File.Exists(p))
+                    File.Create(p).Close();
+                var ls = File.ReadAllLines(p);
+                File.AppendAllLines(p, ps.Map(x => x.Id).Filter(x => !ls.Contains(x)));
+            }
+            catch {}
+        }
+
+        public static string[] GetCachedPackageNames(this IPackageRepository repo)
+        {
+            var p = repo.GetRepositoryCachePath();
+            if (!File.Exists(p))
+                return new string[] { };
+            else
+                return p.Try(x => File.ReadAllLines(x)).Default(new string[]{ });
         }
     }
 

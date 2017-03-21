@@ -54,10 +54,10 @@ $ dnproj conf rm-group -i 2"
                 {
                     var p = Commands["show"].LoadProject(ref args, ref projName);
                     var gs = Groups(p);
-                    if (args.LengthNX() == 0 && !gIndex.HasValue)
+                    if (args.Count() == 0 && !gIndex.HasValue)
                         foreach (var pg in gs.MapI((x, i) => new {v = x, i = i}))
                             printPropertyGroup(pg.v, pg.i);
-                    else if (args.LengthNX() == 0)
+                    else if (args.Count() == 0)
                     {
                         var g = gs.Nth(gIndex.Value).AbortNone(() =>
                             Report.Fatal("index out of range.")
@@ -78,7 +78,7 @@ $ dnproj conf rm-group -i 2"
                     else
                     {
                         var name = args.First();
-                        var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
+                        var val = args.Count() > 1 ? args.Skip(1).JoinToString(" ") : "";
 
                         if (g.Cast<BuildProperty>().Any(x => x.Name == name))
                             g.SetProperty(name, val);
@@ -101,7 +101,7 @@ $ dnproj conf rm-group -i 2"
                     else
                     {
                         var name = args.First();
-                        var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
+                        var val = args.Count() > 1 ? args.Skip(1).JoinToString(" ") : "";
 
                         g.Cast<BuildProperty>()
                                 .Find(x => x.Name == name)
@@ -214,6 +214,7 @@ $ dnproj conf rm-group -i 2"
                 case "show":
                     yield return CommandSuggestion.None;
                     break; 
+
                 case "set":
                     if(!args.Any())
                     {

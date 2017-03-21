@@ -57,10 +57,10 @@ in most cases, you can use 'dnproj add', 'dnproj add-ref', 'dnproj rm', and 'dnp
                 {
                     var p = Commands["show"].LoadProject(ref args, ref projName);
                     var gs = Groups(p);
-                    if (args.LengthNX() == 0 && !gIndex.HasValue)
+                    if (args.Count() == 0 && !gIndex.HasValue)
                         foreach (var pg in gs.MapI((x, i) => new {v = x, i = i}))
                             printItemGroup(pg.v, pg.i);
-                    else if (args.LengthNX() == 0)
+                    else if (args.Count() == 0)
                     {
                     var g = gs.Nth(gIndex.Value).AbortNone(() =>
                             Report.Fatal("index out of range.")
@@ -73,7 +73,7 @@ in most cases, you can use 'dnproj add', 'dnproj add-ref', 'dnproj rm', and 'dnp
                 args =>
                 {
                     var p = Commands["add"].LoadProject(ref args, ref projName);
-                var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
+                    var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
                         Report.Fatal("index out of range.")
                     );
                     if (!args.Any())
@@ -115,7 +115,7 @@ build actions:
                     else
                     {
                         var name = args.First();
-                        var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
+                        var val = args.Count() > 1 ? args.Skip(1).JoinToString(" ") : "";
 
                         g.Cast<BuildItem>()
                          .Find(x => x.Include == name)
@@ -132,7 +132,7 @@ build actions:
                 args =>
                 {
                     var p = Commands["set-hintpath"].LoadProject(ref args, ref projName);
-                var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
+                    var g = Groups(p).Nth(gIndex.Value).AbortNone(() =>
                         Report.Fatal("index out of range.")
                     ); 
                     if (!args.Any())
@@ -140,11 +140,11 @@ build actions:
                     else
                     {
                         var name = args.First();
-                        var val = args.LengthNX() > 1 ? args.Skip(1).JoinToString(" ") : "";
+                        var val = args.Count() > 1 ? args.Skip(1).JoinToString(" ") : "";
 
                         g.Cast<BuildItem>()
-                            .Find(x => x.Include == name)
-                            .Match(
+                         .Find(x => x.Include == name)
+                         .Match(
                             y =>
                             {
                                 if (string.IsNullOrEmpty(val) && y.HasMetadata("HintPath"))
@@ -169,7 +169,7 @@ build actions:
                     ); 
                     foreach (var s in args)
                         g.Cast<BuildItem>()
-                         .Try(xs => xs.First(x => x.Include == s))
+                         .Find(x => x.Include == s)
                          .Match(
                             g.RemoveItem, 
                             () => Report.Fatal("item with name '{0}' doesn't exist.", s)
@@ -198,8 +198,8 @@ build actions:
 
                     var cond = args.JoinToString(" ");
                     gIndex.Map(Groups(p).Nth)
-                    .Flatten()
-                    .Match(
+                          .Flatten()
+                          .Match(
                         g =>
                         {
                             if (!string.IsNullOrEmpty(cond))
@@ -214,10 +214,9 @@ build actions:
                 args =>
                 {
                     var p = Commands["rm-group"].LoadProject(ref args, ref projName);
-
                     gIndex.Map(Groups(p).Nth)
-                    .Flatten()
-                    .Match(
+                          .Flatten()
+                          .Match(
                         g =>
                         {
                             p.RemoveItemGroup(g);
@@ -233,23 +232,23 @@ build actions:
             return this.GenerateSuggestions(
                 args,
                 i =>
-            {
-                switch (i)
                 {
-                    case "-p":
-                    case "--proj":
-                        return CommandSuggestion.Files("*proj");
-                    case "-i":
-                    case "--group-index":
-                        var p = ProjectTools.GetProject(projName);
-                        if(p.HasValue)
-                            return CommandSuggestion.Values(Seq.ZeroTo(Groups(p.Value).Count()).Map(x => x.ToString()));
-                        else
+                    switch (i)
+                    {
+                        case "-p":
+                        case "--proj":
+                            return CommandSuggestion.Files("*proj");
+                        case "-i":
+                        case "--group-index":
+                            var p = ProjectTools.GetProject(projName);
+                            if(p.HasValue)
+                                return CommandSuggestion.Values(Seq.ZeroTo(Groups(p.Value).Count()).Map(x => x.ToString()));
+                            else
+                                return CommandSuggestion.None;
+                        default:
                             return CommandSuggestion.None;
-                    default:
-                        return CommandSuggestion.None;
+                    }
                 }
-            }
             );
         }
 
@@ -261,27 +260,6 @@ build actions:
                     yield return CommandSuggestion.None;
                     break; 
 
-                case "set":
-                    if(!args.Any())
-                    {
-                        var p = ProjectTools.GetProject(projName);
-                        if (p.HasValue)
-                        {
-                            var gs = Groups(p.Value);
-                            var idx = gIndex.Default(0);
-                            yield return 
-                                gs.Nth(idx)
-                                    .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
-                                    .Map(CommandSuggestion.Values)
-                                    .Default(CommandSuggestion.None);
-                        }
-                        else
-                            yield return CommandSuggestion.None;
-                    }
-                    else
-                        yield return CommandSuggestion.None;
-                    break;
-
                 case "set-condition":
                     if(!args.Any())
                     {
@@ -292,9 +270,9 @@ build actions:
                             var idx = gIndex.Default(0);
                             yield return 
                                 gs.Nth(idx)
-                                    .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
-                                    .Map(CommandSuggestion.Values)
-                                    .Default(CommandSuggestion.None);
+                                  .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
+                                  .Map(CommandSuggestion.Values)
+                                  .Default(CommandSuggestion.None);
                         }
                         else
                             yield return CommandSuggestion.None;
@@ -313,9 +291,9 @@ build actions:
                             var idx = gIndex.Default(0);
                             yield return 
                                 gs.Nth(idx)
-                                    .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
-                                    .Map(CommandSuggestion.Values)
-                                    .Default(CommandSuggestion.None);
+                                  .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
+                                  .Map(CommandSuggestion.Values)
+                                  .Default(CommandSuggestion.None);
                         }
                         else
                             yield return CommandSuggestion.None;
@@ -333,9 +311,9 @@ build actions:
                             var idx = gIndex.Default(0);
                             yield return 
                                 gs.Nth(idx)
-                                    .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
-                                    .Map(CommandSuggestion.Values)
-                                    .Default(CommandSuggestion.None);
+                                  .Map(x => x.Cast<BuildItem>().Map(y => y.Include))
+                                  .Map(CommandSuggestion.Values)
+                                  .Default(CommandSuggestion.None);
                         }
                         else
                             yield return CommandSuggestion.None;

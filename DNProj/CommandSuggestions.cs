@@ -124,7 +124,7 @@ namespace DNProj
                 return cs.GroupBy(x => x.RawText[0])
                     .Map(c => 
                     {
-                        if(c.Key == "_arguments")
+                        if (c.Key == "_arguments")
                         {
                             return new CommandSuggestion(
                                 c.Key.Singleton()
@@ -134,6 +134,16 @@ namespace DNProj
                         else
                             return new CommandSuggestion(c.Key.Singleton().Concat(c.Map(x => x.RawText.Skip(1)).Flatten()));
                     });
+        }
+
+        public static CommandSuggestion Merge(this IEnumerable<CommandSuggestion> cs)
+        {
+            if (cs.Count() == 0)
+                return CommandSuggestion.None;
+            else if (cs.Count() == 1)
+                return cs.First();
+            else
+                return new CommandSuggestion(":;".Singleton().Concat(cs.Map(x => x.RawText.Concat(";".Singleton())).Flatten()));
         }
 
         public static IEnumerable<CommandSuggestion> GenerateSuggestions(
@@ -154,7 +164,7 @@ namespace DNProj
             {
                 if (!_rs.Value.Any())
                 {
-                    if(c.Commands.Keys.Any())
+                    if (c.Commands.Keys.Any())
                         yield return CommandSuggestion.Values(c.Commands.Keys);
                     foreach (var o in c.Options)
                     {
@@ -179,31 +189,8 @@ namespace DNProj
                     if (c.Commands.Keys.Contains(rs[0]))
                         foreach (var o in c.Commands[rs[0]].GetSuggestions(rs.Skip(1)))
                             yield return o;
-                    else 
-                    {
-                        var cfs = c.Commands.Keys.Filter(x => x.StartsWith(rs[0]));
-                        if (cfs.Any())
-                            yield return CommandSuggestion.Values(cfs);
-                        else
-                        {
-                            var os = c.Options.Map(o => new 
-                            { 
-                                Option = o, 
-                                Aliases = o.GetNames().Map(x => (x.Length == 1 ? "-" : "--") + x) 
-                            });
-                            var om = os.Filter(o => o.Aliases.Any(x => x.StartsWith(args.Last())));
-                            if (om.Any())
-                                foreach (var o in om)
-                            {
-                                    var desc = o.Option.Description.Split(true, ". ", ", ")[0];
-                                    if (desc.EndsWith("."))
-                                        desc = desc.Remove(desc.Length - 1);
-                                    yield return CommandSuggestion.Option(desc, o.Aliases.Filter(x => x.StartsWith(args.Last())));
-                            }
-                            else if (withArgs != null)
-                                yield return withArgs(rs);
-                        }
-                    }
+                    else if (withArgs != null)
+                        yield return withArgs(rs);
                 }
             }
         }

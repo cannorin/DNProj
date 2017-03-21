@@ -91,6 +91,31 @@ namespace DNProj
                         default:
                             return CommandSuggestion.None;
                     }
+                },
+                () =>
+                {
+                    try
+                    {
+                        var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
+                        return CommandSuggestion.Values(repo.GetCachedPackageNames());
+                    }
+                    catch
+                    {
+                        return CommandSuggestion.None;
+                    }
+                },
+                    
+                _ =>
+                {
+                    try
+                    {
+                        var repo = PackageRepositoryFactory.Default.CreateRepository(sourceUrl);
+                        return CommandSuggestion.Values(repo.GetCachedPackageNames());
+                    }
+                    catch
+                    {
+                        return CommandSuggestion.None;
+                    }
                 }
             );
         }
@@ -185,7 +210,7 @@ namespace DNProj
                         var p = pm.InstallPackageWithValidation(fn, id, version, allow40, allowPre);
 
                         p.Map(x => NuGetTools.ResolveDependencies(x, fn, repo))
-                            .May(pkgs =>
+                         .May(pkgs =>
                         {
                             pm.Logger.Indents += 2;
                             Console.WriteLine("* installing depending packages...");

@@ -59,6 +59,7 @@ namespace DNProj
                     var res = repo.Search(name, false);
                     if (res.Count() > 0)
                     {
+                        repo.UpdatePackageNamesCache(res);
                         Console.WriteLine("Search result for '{0}' from {1}.", name, sourceUrl);
                         Console.WriteLine();
                         foreach (var p in res.Take(take))
