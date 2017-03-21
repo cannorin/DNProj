@@ -132,7 +132,7 @@ namespace DNProj
                     var pr = conf.GetPackageReferences().Find(x => x.Id == e.Package.Id && x.Version == e.Package.Version);
                     e.Package.AssemblyReferences
                         .OrderByDescending(x => x.TargetFramework.Version.Major * 1000 + x.TargetFramework.Version.Minor)
-                        .Find(x => pr.HasValue && pr.Value.TargetFramework == x.TargetFramework)
+                        .Find(x => pr.Check(y => y.TargetFramework == x.TargetFramework))
                         .May(a =>
                         {
                             var absp = new Uri(Path.Combine(path, Path.Combine(pn, a.Path)));

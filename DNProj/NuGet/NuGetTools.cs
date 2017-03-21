@@ -180,7 +180,7 @@ namespace DNProj
                 if (!File.Exists(p))
                     File.Create(p).Close();
                 var ls = File.ReadAllLines(p);
-                File.AppendAllLines(p, ps.Map(x => x.Id).Filter(x => !ls.Contains(x)));
+                File.AppendAllLines(p, ps.Map(x => x.Id).FilterOut(ls.Contains));
             }
             catch {}
         }
