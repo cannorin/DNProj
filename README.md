@@ -3,7 +3,7 @@ DNProj
 
 [![Build Status](https://travis-ci.org/cannorin/DNProj.svg?branch=master)](https://travis-ci.org/cannorin/DNProj)
 
-Manage your .\*proj and .sln from commandline.
+Manage your .\*proj and .sln with commandline.
 
 # dnproj
 
@@ -116,9 +116,19 @@ PREFIX=/path/to/your/destination make install
 ```
 # zsh completion
 
+## how to install
+
 Copy ```misc/zsh-completion/_dnproj``` to your ```$FPATH```.
 
 Make sure ```dnproj``` is in your ```$PATH``` before use.
+
+## autocomplete NuGet package names
+
+When you use dnproj to install, update, restore, or search NuGet packages, dnproj will automatically store the names of the packages.
+
+They will be stored to ```/tmp/*.cache```, where the ```*``` represents the escaped url of the NuGet repository you have used.
+
+Those cached names will be used as suggestion when you do ```dnproj nuget install```, from the next time.
 
 # license
 
