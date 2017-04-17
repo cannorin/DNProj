@@ -109,8 +109,11 @@ namespace DNProj
 
             if(Verbose && p.IsSatellitePackage())
                 Report.Info(this.Logger.Indents, "package '{0}' is a satellite package.", id); 
-            else if(Verbose && !sfs.Any())
-                Report.Warning(this.Logger.Indents, "package '{0}' has an empty target framework.", id); 
+            else if(!sfs.Any())
+            {
+                if(Verbose) 
+                    Report.Warning(this.Logger.Indents, "package '{0}' has an empty target framework.", id); 
+            }
             else if (!force && !sfs.Contains(fn))
             {
                 var alto = p.FindLowerCompatibleFramework(fn);    
