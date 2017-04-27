@@ -26,7 +26,7 @@ namespace DNProj
     public class ProjectCommand : Command
     {
         public ProjectCommand()
-            : base("dnproj", @"operate the .*proj file in the current directory.", "", "<command>", "[options]")
+            : base("dnproj", @"manage the MSBuild project file (.*proj) in the current directory.", "manage MSBuild project.", "<command>", "[options]")
         {
             Commands["new"] = new NewProjectCommand();
             Commands["add"] = new AddProjectCommand();

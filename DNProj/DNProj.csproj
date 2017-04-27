@@ -77,6 +77,7 @@
     <Compile Include="NuGet\NuGetRestoreCommand.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="CommandSuggestions.cs" />
+    <Compile Include="ManGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

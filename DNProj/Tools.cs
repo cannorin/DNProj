@@ -104,6 +104,8 @@ namespace DNProj
                     Console.WriteLine(string.Join(" ", s.RawText));
                 }
             }
+            else if(args.Length > 1 && args[0] == "--generate-man")
+                ManGenerator.WriteAllCommands(new ProjectCommand(), args[1], 1);
             else
                 new T().Run(args);
         }
