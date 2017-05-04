@@ -73,7 +73,7 @@ you can add multiple references at once, when neither --cond nor --hint is used.
                 () => CommandSuggestion.Values(
                     Shell.Eval("gacutil", "-l")
                         .Split('\n')
-                        .Rev().Skip(2).Rev()
+                        .Skip(1).Rev().Skip(2).Rev()
                         .Filter(x => !x.StartsWith("policy."))
                         .Choose(x => x.Try(_x => _x.Split(true, ", ")[0]))
                 ),
@@ -85,7 +85,7 @@ you can add multiple references at once, when neither --cond nor --hint is used.
                         return CommandSuggestion.Values(
                             Shell.Eval("gacutil", "-l")
                                  .Split('\n')
-                                 .Rev().Skip(2).Rev()
+                                 .Skip(1).Rev().Skip(2).Rev()
                                  .Filter(x => !x.StartsWith("policy."))
                                  .Choose(x => x.Try(_x => _x.Split(true, ", ")[0]))
                         );
