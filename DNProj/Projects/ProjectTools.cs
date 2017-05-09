@@ -155,7 +155,7 @@ namespace DNProj
                 var p = new Project();
                 try
                 {
-                    p.Load(x);
+                    p.Load(x, ProjectLoadSettings.IgnoreMissingImports);
                 }
                 catch (InvalidProjectFileException e)
                 {

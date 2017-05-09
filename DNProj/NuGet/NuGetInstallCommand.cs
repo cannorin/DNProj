@@ -139,9 +139,11 @@ namespace DNProj
                 var proj = this.LoadProject(ref args, ref projName);
                 if (args.Count() > 0)
                 {
+                    slnName = slnName.Map(Path.GetFullPath);
                     // resolve pathes
-                    var path = target.Map(Path.GetFullPath)
-                    .Default(Path.Combine(Path.GetDirectoryName(slnName.Default(proj.FullFileName)), "packages"));
+                    var path = target
+                        .Map(Path.GetFullPath)
+                        .Default(Path.Combine(Path.GetDirectoryName(slnName.Default(proj.FullFileName)), "packages"));
 
                     var confloc = config.Map(Path.GetFullPath)
                         .Default(

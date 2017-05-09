@@ -158,6 +158,7 @@ build actions:
                 }
 
                 p.SourceItemGroup().AddNewItem(act, fn);
+                continue;
                 skip:
                 break;
             }
