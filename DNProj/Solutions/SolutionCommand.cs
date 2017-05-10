@@ -39,7 +39,12 @@ namespace DNProj
             // Options.Add("i=|input=", "specify solution file, not in the current directory.", p => projName = p);
         }
 
-        public Option<Project> Solution
+        public override void Run(IEnumerable<string> args)
+        {
+            Solution.Parse(args.First()).ToLines().Iter(Console.WriteLine);
+        }
+
+        public Option<Project> solution
         {
             get
             {

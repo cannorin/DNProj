@@ -92,10 +92,10 @@ namespace DNProj
                 Report.Fatal("invalid output type '{0}'.", type);
 
             var fn = args.First();
-            if (!Path.GetFileName(fn).Contains("."))
+            if (!Path.GetFileName(fn).EndsWith("proj"))
                 fn += ".proj";
             var f = Templates.GenPath(outputdir, fn);
-            var name = Path.GetFileName(fn).Split('.').Rev().Skip(1).Rev().JoinToString();
+            var name = Path.GetFileName(fn).Split('.').Rev().Skip(1).Rev().JoinToString(".");
 
             if (!string.IsNullOrEmpty(outputdir) && !Directory.Exists(outputdir))
                 Directory.CreateDirectory(outputdir);

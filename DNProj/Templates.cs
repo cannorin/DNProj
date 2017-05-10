@@ -29,13 +29,13 @@ namespace DNProj
 {
     public static class Templates
     {
-        public static string[] HelpOptions { get; } = new []{"--help", "-h", "-?"};
+        public static readonly string[] HelpOptions = new []{"--help", "-h", "-?"};
 
-        public static string[] BuildItems { get; } = new []{ "Compile", "EmbeddedResource", "None", "Content" };
+        public static readonly string[] BuildItems = new []{ "Compile", "EmbeddedResource", "None", "Content" };
 
-        public static string AssemblyInfo { get; } = "AssemblyInfo.cs";
+        public static readonly string AssemblyInfo = "AssemblyInfo.cs";
 
-        public static string AssemblyInfoFSharp { get; } = "AssemblyInfo.fs";
+        public static readonly string AssemblyInfoFSharp = "AssemblyInfo.fs";
 
         public static string GenerateAssemblyInfo(string name)
         {
@@ -58,7 +58,7 @@ using System.Runtime.CompilerServices;
 
         public static string GenerateLibraryClass(string name, string className = "MyClass")
         {
-            return string.Format(@"﻿using System;
+            return string.Format(@"using System;
 
 namespace {0} 
 {{
@@ -74,7 +74,7 @@ namespace {0}
 
         public static string GenerateExeClass(string name)
         {
-            return string.Format(@"﻿using System;
+            return string.Format(@"using System;
 
 namespace {0}
 {{

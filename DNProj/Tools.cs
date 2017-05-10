@@ -126,6 +126,11 @@ namespace DNProj
             Environment.Exit(1);
         }
 
+        public static string Indent(this string s, int depth, string one = "    ")
+        {
+            return one.Repeat(depth).Append(s).JoinToString();
+        }
+
         public static void WriteLine(this string s, System.IO.TextWriter writer)
         {
             writer.WriteLine(s);
