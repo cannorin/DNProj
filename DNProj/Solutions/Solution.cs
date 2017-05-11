@@ -16,7 +16,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-   */
+*/
 
 using System;
 using System.Collections.Generic;
@@ -36,6 +36,11 @@ namespace DNProj
         public static void Add<TK, TV>(this List<KeyValuePair<TK, TV>> l, TK key, TV value)
         {
             l.Add(new KeyValuePair<TK, TV>(key, value));
+        }
+        
+        public static string AsSlnStyle(this Guid g)
+        {
+            return "{" + g.ToString().ToUpper() + "}";
         }
     }
 
@@ -153,6 +158,89 @@ namespace DNProj
             Global = new SlnGlobalBlock();
         }
 
+        public string[] GetConfigurationPlatforms()
+        {
+            return Global.Sections
+                .AsEnumerable()
+                .Find(x => x.Name == "SolutionConfigurationPlatforms")
+                .Map(x => x.Items.AsEnumerable())
+                .FlattenToSeq()
+                .Map(x => x.Key)
+                .ToArray();
+        }
+
+        public Dictionary<string, KeyValuePair<string, string>[]> GetProjectConfigurationPlatforms(SlnProjectBlock p)
+        {
+            return Global.Sections
+                .AsEnumerable()
+                .Find(x => x.Name == "ProjectConfigurationPlatforms")
+                .Map(x => x.Items.AsEnumerable())
+                .FlattenToSeq()
+                .Filter(x => x.Key.StartsWith(p.Guid.AsSlnStyle()))
+                .Map(x => new { cfg = x.Key.Split('.')[1], key = x.Key.Split('.').Skip(2).JoinToString("."), value = x.Value })
+                .GroupBy(x => x.cfg)
+                .ToDictionary(x => x.Key, x => x.Map(y => new KeyValuePair<string, string>(y.key, y.value)).ToArray());
+        }
+
+        public bool RemoveConfigurationPlatform(string s)
+        {
+            var scp = Global.Sections.AsEnumerable().Find(x => x.Name == "SolutionConfigurationPlatforms");
+            var pcp = Global.Sections.AsEnumerable().Find(x => x.Name == "ProjectConfigurationPlatforms");
+            if(  scp.Check(x => x.Items.Any(y => y.Key == s)) 
+              && pcp.Check(x => x.Items.Any(y => y.Key.Split('.')[1] == s)))
+            {
+                scp.Value.Items.RemoveAll(x => x.Key == s);
+                pcp.Value.Items.RemoveAll(x => x.Key.Split('.')[1] == s);
+                return true;
+            }
+            return false;
+        }
+
+        public bool ApplyConfigurationPlatform(SlnProjectBlock p)
+        {
+            var pcp = Global.Sections.AsEnumerable().Find(x => x.Name == "ProjectConfigurationPlatforms");
+            if(pcp.HasValue)
+            {
+                var pg = p.Guid.AsSlnStyle();
+                foreach(var pl in this.GetConfigurationPlatforms())
+                {
+                    pcp .FilterOut(x => x.Items.Any(y => y.Key.StartsWith(pg + "." + pl)))
+                        .May(x => {
+                            var ns = pg + "." + pl + ".";
+                            x.Items.Add(ns + "ActiveCfg", pl);
+                            x.Items.Add(ns + "Build.0", pl);
+                        });
+                }
+                pcp.May(x => x.Items.Sort((a, b) => a.Key.CompareTo((b.Key))));
+                return true;
+            }
+            return false;
+        }
+
+        public bool AddConfigurationPlatform(string s)
+        {
+            var scp = Global.Sections.AsEnumerable().Find(x => x.Name == "SolutionConfigurationPlatforms");
+            var pcp = Global.Sections.AsEnumerable().Find(x => x.Name == "ProjectConfigurationPlatforms");
+            if(scp.HasValue && pcp.HasValue)
+            {
+                scp.FilterOut(x => x.Items.Map(y => y.Key).Contains(s))
+                   .May(x => x.Items.Add(s, s));
+                foreach(var pg in Projects.Map(x => x.Guid.AsSlnStyle()))
+                    pcp .FilterOut(x => 
+                         x.Items.All(y => !y.Key.StartsWith(pg))
+                         || x.Items.Any(y => y.Key.StartsWith(pg + "." + s))
+                        )
+                        .May(x => {
+                            var ns = pg + "." + s + ".";
+                            x.Items.Add(ns + "ActiveCfg", s);
+                            x.Items.Add(ns + "Build.0", s);
+                        });
+                pcp.May(x => x.Items.Sort((a, b) => a.Key.CompareTo((b.Key))));
+                return true;
+            }
+            return false;
+        }
+
         public IEnumerable<string> ToLines()
         {
             yield return "";
@@ -160,7 +248,7 @@ namespace DNProj
             yield return "# Visual Studio " + VisualStudioVersion;
             foreach(var i in VSSettings)
                 yield return i.Key + " = " + i.Value;
-            foreach(var p in Projects)
+            foreach(var p in Projects.AsEnumerable().Sort((a, b) => -a.ProjectType.Guid.CompareTo(b.ProjectType.Guid)))
                 foreach(var l in p.Print(0))
                 yield return l;
             foreach(var l in Global.Print(0))
@@ -218,7 +306,10 @@ namespace DNProj
                                 var xs = l.Split(false, " = ");
                                 s.VSSettings.Add(xs[0], xs[1]);
                             }
+                            else
+                                throw new Exception("");
                             break;
+
                         case mode.projblock:
                             if(l.StartsWith("ProjectSection"))
                             {
@@ -233,8 +324,9 @@ namespace DNProj
                                 currentMode = mode.root;
                             }
                             else
-                                throw new InvalidDataException(string.Format("unexpected line '{0}' at line {1}", l, i));
+                                throw new Exception("");
                             break;
+
                         case mode.globlock:
                             if(l.StartsWith("GlobalSection"))
                             {
@@ -247,7 +339,10 @@ namespace DNProj
                                 s.Global = gb.Value;
                                 currentMode = mode.root;
                             }
+                            else
+                                throw new Exception("");
                             break;
+
                         case mode.projsect:
                         case mode.glosect:
                             if(l.Contains(" = "))
@@ -269,7 +364,10 @@ namespace DNProj
                                 }
                                 sc = Option.None;
                             }
+                            else
+                                throw new Exception("");
                             break;
+
                         default:
                             break;
                     }

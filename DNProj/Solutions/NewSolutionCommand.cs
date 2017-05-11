@@ -29,12 +29,22 @@ namespace DNProj
     public class NewSolutionCommand : Command
     {
         string outputdir;
-
+        string temp = "none";
+        string type = "exe";
+        string arch = "AnyCPU";
+        string fw = "v4.5";
+        bool empty = false;
+    
         public NewSolutionCommand()
             : base("dnsln new", "create new solution.", "create new solution.", "<filename>", "[options]")
         {
 
-            Options.Add("d=|output-dir=", "specify output directory. \n[default=<current directory>]", x => outputdir = x);
+            Options.Add("d=|project-dir=", "specify project directory. \n[default=<current directory>/<project name>]", x => outputdir = x);
+            Options.Add("t=|template=", "specify language template. \n(none|csharp|fsharp) [default=none]", x => temp = x);
+            Options.Add("o=|output-type=", "specify output type. \n(library|exe|winexe|module) [default=exe]", x => type = x);
+            Options.Add("p=|platform=", "specify platform target. \n(AnyCPU|x86|x64) [default=AnyCPU]", x => arch = x);
+            Options.Add("f=|target-framework=", "specify target framework. \n[default=v4.5]", x => fw = x);
+            Options.Add("e|empty", "create empty solution, ignoring all the other options.", x => empty = x != null);
         }
 
         public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))

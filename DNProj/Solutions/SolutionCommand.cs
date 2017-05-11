@@ -41,7 +41,13 @@ namespace DNProj
 
         public override void Run(IEnumerable<string> args)
         {
-            Solution.Parse(args.First()).ToLines().Iter(Console.WriteLine);
+            var s = Solution.Parse(args.First());
+            var p = new SlnProjectBlock("DNProj.Tests", "DNProj.Tests\\DNProj.Tests.csproj", ProjectType.CSharp);
+            s.AddConfigurationPlatform("Release|x64");
+            s.RemoveConfigurationPlatform("DebugWin32|Any CPU");
+            s.Projects.Add(p);
+            s.ApplyConfigurationPlatform(p);
+            s.ToLines().Iter(Console.WriteLine);
         }
 
         public Option<Project> solution

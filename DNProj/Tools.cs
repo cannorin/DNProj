@@ -143,14 +143,10 @@ namespace DNProj
 
         public static List<string> SafeParse(this OptionSet o, IEnumerable<string> args)
         {
-            return o.Try(xs => xs.Parse(args)).MatchEx(x => x, e =>
-            {
-                e.Match(
-                    xe => Report.Fatal("{0}", e.Value.Message), 
+            return o.Try(xs => xs.Parse(args)).AbortErrorOrNone(
+                    e => Report.Fatal("{0}", e.Message), 
                     () => Report.Fatal("failed to parse arguments.")
                 );
-                return null;
-            });
         }
 
         public static string Version
