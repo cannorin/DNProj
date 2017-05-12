@@ -182,6 +182,17 @@ namespace DNProj
                 .ToDictionary(x => x.Key, x => x.Map(y => new KeyValuePair<string, string>(y.key, y.value)).ToArray());
         }
 
+        public bool PrepareConfigurationPlatforms()
+        {
+            var scp = Global.Sections.AsEnumerable().Find(x => x.Name == "SolutionConfigurationPlatforms");
+            var pcp = Global.Sections.AsEnumerable().Find(x => x.Name == "ProjectConfigurationPlatforms");
+            if(!scp.HasValue)
+                Global.Sections.Add(new SlnSection(false, "SolutionConfigurationPlatforms", "preSolution"));
+            if(!pcp.HasValue)
+                Global.Sections.Add(new SlnSection(false, "ProjectConfigurationPlatforms", "postSolution"));
+            return !(scp || pcp).HasValue;
+        }
+
         public bool RemoveConfigurationPlatform(string s)
         {
             var scp = Global.Sections.AsEnumerable().Find(x => x.Name == "SolutionConfigurationPlatforms");
@@ -221,10 +232,13 @@ namespace DNProj
         {
             var scp = Global.Sections.AsEnumerable().Find(x => x.Name == "SolutionConfigurationPlatforms");
             var pcp = Global.Sections.AsEnumerable().Find(x => x.Name == "ProjectConfigurationPlatforms");
-            if(scp.HasValue && pcp.HasValue)
+            if(scp.HasValue)
             {
                 scp.FilterOut(x => x.Items.Map(y => y.Key).Contains(s))
                    .May(x => x.Items.Add(s, s));
+            }
+            if(pcp.HasValue)
+            {
                 foreach(var pg in Projects.Map(x => x.Guid.AsSlnStyle()))
                     pcp .FilterOut(x => 
                          x.Items.All(y => !y.Key.StartsWith(pg))
@@ -264,7 +278,7 @@ namespace DNProj
             glosect = 4
         }
 
-        public static Solution Parse(string filename)
+        public static Solution Open(string filename)
         {
             var s = new Solution();
             Option<SlnProjectBlock> pb = Option.None;
@@ -380,6 +394,11 @@ namespace DNProj
             }
             return s;
         }
+
+        public void SaveTo(string filename)
+        {
+            Tools.Touch(filename);
+            File.WriteAllLines(filename, ToLines());
+        }
     }
 } 
-

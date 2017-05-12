@@ -55,7 +55,7 @@ namespace DNProj
                     switch(i)
                     {
                         case "-d":
-                        case "--output-dir":
+                        case "--project-dir":
                             return CommandSuggestion.Directories();
                         default:
                             return CommandSuggestion.None;
@@ -74,16 +74,37 @@ namespace DNProj
                 return;
             }
 
+            if(args.Count() > 1)
+                Report.Fatal("you can't create more than one solution at once.");
+
             var fn = args.First();
             if (!Path.GetFileName(fn).EndsWith(".sln"))
                 fn += ".sln";
-            var f = Templates.GenPath(outputdir, fn);
 
+            var pname = Path.GetFileName(fn).Split('.').Rev().Skip(1).Rev().JoinToString(".");
+            if (outputdir == null)
+                outputdir = pname;
             if (!string.IsNullOrEmpty(outputdir) && !Directory.Exists(outputdir))
                 Directory.CreateDirectory(outputdir);
-            if (!File.Exists(f))
-                File.Create(f).Close();
+           
+            if(!Tools.Touch(fn))
+                Report.Fatal("the file '{0}' already exists, or you don't have an enough permission.", fn);
+            
+            var s = new Solution();
 
+            var pext = temp == "csharp" ? ".csproj" : temp == "fsharp" ? ".fsproj" : ".proj";
+            var ppath = Templates.GenPath(outputdir, pname + pext);
+            NewProjectCommand.Create(ppath, pname, temp, type, fw, arch);
+            var pb = new SlnProjectBlock(pname, ppath, 
+                    temp == "csharp" ? ProjectType.CSharp :
+                    temp == "fsharp" ? ProjectType.FSharp : ProjectType.CSharp
+            );
+            s.Projects.Add(pb);
+            s.PrepareConfigurationPlatforms();
+            s.AddConfigurationPlatform("Debug|" + arch);
+            s.AddConfigurationPlatform("Release|" + arch);
+            s.ApplyConfigurationPlatform(pb);
+            s.SaveTo(fn);
         }
     }
 }

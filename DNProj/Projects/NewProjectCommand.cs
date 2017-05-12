@@ -78,25 +78,9 @@ namespace DNProj
             );
         }
 
-        public override void Run(IEnumerable<string> args)
+        public static Project Create(string f, string name, string temp, string type, string fw = "v4.5", string arch = "Any CPU")
         {
-            args = Options.SafeParse(args);
-            if (!args.Any() || args.Any(Templates.HelpOptions.Contains))
-            {
-                Help(args);
-                return;
-            }
-            if (!(temp == "csharp" || temp == "fsharp" || temp == "none"))
-                Report.Fatal("invalid language template '{0}'.", temp);
-            if (!new []{ "library", "exe", "winexe", "module" }.Contains(type))
-                Report.Fatal("invalid output type '{0}'.", type);
-
-            var fn = args.First();
-            if (!Path.GetFileName(fn).EndsWith("proj"))
-                fn += ".proj";
-            var f = Templates.GenPath(outputdir, fn);
-            var name = Path.GetFileName(fn).Split('.').Rev().Skip(1).Rev().JoinToString(".");
-
+            var outputdir = Path.GetDirectoryName(f);
             if (!string.IsNullOrEmpty(outputdir) && !Directory.Exists(outputdir))
                 Directory.CreateDirectory(outputdir);
             if (!File.Exists(f))
@@ -195,6 +179,28 @@ namespace DNProj
                 fs => new StreamWriter(fs).Use(),
                 (_, sw) => p.Save(sw)
             );
+            return p;
+        }
+
+        public override void Run(IEnumerable<string> args)
+        {
+            args = Options.SafeParse(args);
+            if (!args.Any() || args.Any(Templates.HelpOptions.Contains))
+            {
+                Help(args);
+                return;
+            }
+            if (!(temp == "csharp" || temp == "fsharp" || temp == "none"))
+                Report.Fatal("invalid language template '{0}'.", temp);
+            if (!new []{ "library", "exe", "winexe", "module" }.Contains(type))
+                Report.Fatal("invalid output type '{0}'.", type);
+
+            var fn = args.First();
+            if (!Path.GetFileName(fn).EndsWith("proj"))
+                fn += ".proj";
+            var f = Templates.GenPath(outputdir, fn);
+            var name = Path.GetFileName(fn).Split('.').Rev().Skip(1).Rev().JoinToString(".");
+            Create(f, name, temp, type, fw, arch);
         }
     }
 }

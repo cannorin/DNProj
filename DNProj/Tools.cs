@@ -24,6 +24,7 @@ using System.Linq;
 using Mono.Options;
 using NX;
 using System.Reflection;
+using System.IO;
 
 namespace DNProj
 {
@@ -124,6 +125,27 @@ namespace DNProj
         {
             Console.WriteLine(s, args);
             Environment.Exit(1);
+        }
+
+        public static bool Touch(string path)
+        {
+            var d = Path.GetDirectoryName(path);
+            try
+            {
+                if(!string.IsNullOrEmpty(d) && !Directory.Exists(d))
+                    Directory.CreateDirectory(d);
+                if(!File.Exists(path))
+                {
+                    File.Create(path).Close();
+                    return true;
+                }
+                else return false;
+            }
+            catch
+            {
+                throw;
+                //return false;
+            }
         }
 
         public static string Indent(this string s, int depth, string one = "    ")

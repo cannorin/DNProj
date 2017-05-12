@@ -31,45 +31,15 @@ namespace DNProj
 {
     public class SolutionCommand : Command
     {
-        //string projName;
-
         public SolutionCommand()
-            : base("dnsln", "not implemented.", "")
+            : base("dnsln", "manage the MSBuild solution file (*.sln) in the current directory.", "manage MSBuild solution.", "<command>", "[options]")
         {
-            // Options.Add("i=|input=", "specify solution file, not in the current directory.", p => projName = p);
-        }
-
-        public override void Run(IEnumerable<string> args)
-        {
-            var s = Solution.Parse(args.First());
-            var p = new SlnProjectBlock("DNProj.Tests", "DNProj.Tests\\DNProj.Tests.csproj", ProjectType.CSharp);
-            s.AddConfigurationPlatform("Release|x64");
-            s.RemoveConfigurationPlatform("DebugWin32|Any CPU");
-            s.Projects.Add(p);
-            s.ApplyConfigurationPlatform(p);
-            s.ToLines().Iter(Console.WriteLine);
-        }
-
-        public Option<Project> solution
-        {
-            get
-            {
-                throw new NotImplementedException(); //TODO
-                /*
-                return Environment.CurrentDirectory
-                    .Try(x => Directory.GetFiles(x).Find(f => f.EndsWith("sln")))
-                    .Match(x => x, () => projName)
-                    .Try(x =>
-                    {
-                        var sc = new SolutionCommand();
-                        
-                        var p = new Project();
-                        p.Load(x);
-                        return p;
-                    });
-                */
-            }
+            Commands["new"] = new NewSolutionCommand();
+            Commands["version"] = Child(_ =>
+                {
+                    Console.WriteLine("dnsln version {0}\ncopyright (c) cannorin 2016", Tools.Version);
+                    Environment.Exit(0);
+                }, "dnsln version", "show version.", "show version.");
         }
     }
 }
-
