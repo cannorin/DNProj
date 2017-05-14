@@ -96,7 +96,7 @@ namespace DNProj
 
             var p = version.Match(
                 v => repo.FindPackage(id, v),
-                () => repo.FindPackage(id)
+                () => repo.FindPackagesById(id).First(x => x.IsLatestVersion)
             );
 
             if (p == null)
