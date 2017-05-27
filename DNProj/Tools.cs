@@ -106,7 +106,7 @@ namespace DNProj
                 }
             }
             else if(args.Length > 1 && args[0] == "--generate-man")
-                ManGenerator.WriteAllCommands(new ProjectCommand(), args[1], 1);
+                ManGenerator.WriteAllCommands(new T(), args[1], 1);
             else
                 new T().Run(args);
         }
@@ -169,6 +169,28 @@ namespace DNProj
                     e => Report.Fatal("{0}", e.Message), 
                     () => Report.Fatal("failed to parse arguments.")
                 );
+        }
+       
+        public static string GetRelativePath(string filespec, string folder)
+        {
+            var pathUri = new Uri(filespec);
+            if (!folder.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            {
+                folder += Path.DirectorySeparatorChar;
+            }
+            var folderUri = new Uri(folder);
+            return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString());
+        }
+
+        public static string SystemToDOSPath(this string s)
+        {
+            return s.Replace(Path.DirectorySeparatorChar, '\\');
+        }
+
+
+        public static string DOSToSystemPath(this string s)
+        {
+            return s.Replace('\\', Path.DirectorySeparatorChar);
         }
 
         public static string Version

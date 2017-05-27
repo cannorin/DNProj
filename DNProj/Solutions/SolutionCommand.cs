@@ -35,6 +35,7 @@ namespace DNProj
             : base("dnsln", "manage the MSBuild solution file (*.sln) in the current directory.", "manage MSBuild solution.", "<command>", "[options]")
         {
             Commands["new"] = new NewSolutionCommand();
+            Commands["add-proj"] = new AddProjSolutionCommand();
             Commands["version"] = Child(_ =>
                 {
                     Console.WriteLine("dnsln version {0}\ncopyright (c) cannorin 2016", Tools.Version);

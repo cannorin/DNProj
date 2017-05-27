@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
 using System.Linq;
+using System.IO;
 using NX;
 using Microsoft.Build.BuildEngine;
 using System.Collections.Generic;
@@ -181,6 +182,36 @@ namespace DNProj
                 Environment.Exit(1);
             });
         }
+
+        public static string GetName(string projPath)
+        {
+            return Path.GetFileNameWithoutExtension(projPath);
+        }
+
+        public static ProjectType GetProjectType(string projPath)
+        {
+            if(File.Exists(projPath))
+            {
+                var p = new Project();
+                p.Load(projPath);
+                if(p.BuildItems().Any(x => x.Include.EndsWith(".cs")) || p.Xml.Contains("Microsoft.CSharp"))
+                    return ProjectType.CSharp;
+                else if(p.BuildItems().Any(x => x.Include.EndsWith(".fs")) || p.Xml.Contains("Microsoft.FSharp"))
+                    return ProjectType.FSharp;
+                else if(p.Xml.Contains("Microsoft.CodeSharing"))
+                    return ProjectType.Shared;
+                else return ProjectType.CSharp;
+
+            }
+            else
+            {
+                if(projPath.EndsWith(".fsproj"))
+                    return ProjectType.FSharp;
+                else if(projPath.EndsWith(".shproj"))
+                    return ProjectType.Shared;
+                else
+                    return ProjectType.CSharp;
+            }
+        }
     }
 }
-

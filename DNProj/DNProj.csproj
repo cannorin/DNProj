@@ -107,5 +107,6 @@
     <Compile Include="ManGenerator.cs" />
     <Compile Include="Solutions\NewSolutionCommand.cs" />
     <Compile Include="Solutions\Solution.cs" />
+    <Compile Include="Solutions\AddProjSolutionCommand.cs" />
   </ItemGroup>
 </Project>

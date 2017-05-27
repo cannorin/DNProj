@@ -31,19 +31,6 @@ namespace DNProj
         IEnumerable<string> Print(int indent);
     }
 
-    public static class SolutionTools
-    {
-        public static void Add<TK, TV>(this List<KeyValuePair<TK, TV>> l, TK key, TV value)
-        {
-            l.Add(new KeyValuePair<TK, TV>(key, value));
-        }
-        
-        public static string AsSlnStyle(this Guid g)
-        {
-            return "{" + g.ToString().ToUpper() + "}";
-        }
-    }
-
     public class SlnSection : IIndentedPrintable
     {
         public string Type { get; set; }
@@ -148,6 +135,7 @@ namespace DNProj
         public Dictionary<string, string> VSSettings { get; set; }
         public List<SlnProjectBlock> Projects { get; set; }
         public SlnGlobalBlock Global { get; set; }
+        public Option<string> FileName { get; set; }
 
         public Solution(string formatVersion = "12.00", string vsVersion = "2012", Dictionary<string, string> vssettings = null)
         {
@@ -156,6 +144,7 @@ namespace DNProj
             VSSettings = vssettings ?? new Dictionary<string, string>();
             Projects = new List<SlnProjectBlock>();
             Global = new SlnGlobalBlock();
+            FileName = Option.None;
         }
 
         public string[] GetConfigurationPlatforms()
@@ -385,11 +374,12 @@ namespace DNProj
                         default:
                             break;
                     }
+
+                    s.FileName = filename;
                 }
                 catch
                 {
                     throw new InvalidDataException(string.Format("unexpected line '{0}' at line {1}", l, i));
-
                 }
             }
             return s;
@@ -399,6 +389,58 @@ namespace DNProj
         {
             Tools.Touch(filename);
             File.WriteAllLines(filename, ToLines());
+        }
+    }
+
+    public static class SolutionTools
+    {
+        public static void Add<TK, TV>(this List<KeyValuePair<TK, TV>> l, TK key, TV value)
+        {
+            l.Add(new KeyValuePair<TK, TV>(key, value));
+        }
+        
+        public static string AsSlnStyle(this Guid g)
+        {
+            return "{" + g.ToString().ToUpper() + "}";
+        }
+        
+        public static Option<Solution> GetSolution(string defaultName = null)
+        {
+            return Environment.CurrentDirectory
+                .Try(x => defaultName ?? System.IO.Directory.GetFiles(x).First(f => f.EndsWith(".sln")))
+                .Try(x =>
+            {
+                Solution s = null;
+                try
+                {
+                    s = Solution.Open(x);
+                }
+                catch (InvalidDataException e)
+                {
+                    Report.Fatal("your solution file {0} is corrupted. please fix it by yourself.\noriginal error:\n  {1}", x, e.Message);
+                }
+                return s;
+            });
+        }
+
+        public static Solution LoadSolution(this Command c, ref IEnumerable<string> args, ref string slnName)
+        {
+            args = c.Options.SafeParse(args);
+            if (args.Any(Templates.HelpOptions.Contains))
+            {
+                c.Help(args);
+                Environment.Exit(0);
+            }
+            var s = GetSolution(slnName)
+                .AbortNone(() =>
+            {
+                Report.Error("solution file not found.");
+                c.Help(New.Seq(""));
+                Environment.Exit(1);
+            });
+
+            slnName = s.FileName.Value;
+            return s;
         }
     }
 } 

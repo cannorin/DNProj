@@ -30,7 +30,7 @@ namespace DNProj
     public class NewProjectCommand : Command
     {
         string outputdir = "";
-        string temp = "none";
+        string temp = "csharp";
         string type = "exe";
         string arch = "AnyCPU";
         string fw = "v4.5";
@@ -38,15 +38,15 @@ namespace DNProj
         public NewProjectCommand()
             : base("dnproj new", 
                    "create new project.", 
-                   "create new project.", "<filename>", "[options]")
+                   "create new project.", "<projectname>", "[options]")
         {
             Options.Add("d=|output-dir=", "specify output directory. \n[default=<current directory>]", x => outputdir = x);
-            Options.Add("t=|template=", "specify language template. \n(none|csharp|fsharp) [default=none]", x => temp = x);
+            Options.Add("t=|template=", "specify language template. \n(none|csharp|fsharp) [default=csharp]", x => temp = x);
             Options.Add("o=|output-type=", "specify output type. \n(library|exe|winexe|module) [default=exe]", x => type = x);
             Options.Add("p=|platform=", "specify platform target. \n(AnyCPU|x86|x64) [default=AnyCPU]", x => arch = x);
             Options.Add("f=|target-framework=", "specify target framework. \n[default=v4.5]", x => fw = x);
 
-            this.AddExample("$ dnproj new ConsoleApplication1.csproj -d ConsoleApplication1 -t csharp");
+            this.AddExample("$ dnproj new ConsoleApplication1 -d ConsoleApplication1 -t csharp");
         }
 
         public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
@@ -78,9 +78,11 @@ namespace DNProj
             );
         }
 
-        public static Project Create(string f, string name, string temp, string type, string fw = "v4.5", string arch = "Any CPU")
+        public static Project Create(string name, string outputdir, string temp, string type, string fw = "v4.5", string arch = "Any CPU")
         {
-            var outputdir = Path.GetDirectoryName(f);
+            var pext = temp == "csharp" ? ".csproj" : temp == "fsharp" ? ".fsproj" : ".proj";
+            var f = Templates.GenPath(outputdir, name + pext);
+            
             if (!string.IsNullOrEmpty(outputdir) && !Directory.Exists(outputdir))
                 Directory.CreateDirectory(outputdir);
             if (!File.Exists(f))
@@ -173,6 +175,8 @@ namespace DNProj
             else if (temp == "fsharp")
                 p.AddNewImport("$(MSBuildExtensionsPath32)\\..\\Microsoft SDKs\\F#\\3.1\\Framework\\v4.0\\Microsoft.FSharp.Targets", "");
 
+            p.FullFileName = Path.GetFullPath(f);
+
             // save
             Using.SelectMany(
                 File.OpenWrite(f).Use(),
@@ -195,12 +199,8 @@ namespace DNProj
             if (!new []{ "library", "exe", "winexe", "module" }.Contains(type))
                 Report.Fatal("invalid output type '{0}'.", type);
 
-            var fn = args.First();
-            if (!Path.GetFileName(fn).EndsWith("proj"))
-                fn += ".proj";
-            var f = Templates.GenPath(outputdir, fn);
-            var name = Path.GetFileName(fn).Split('.').Rev().Skip(1).Rev().JoinToString(".");
-            Create(f, name, temp, type, fw, arch);
+            var name = args.First();
+            Create(name, outputdir, temp, type, fw, arch);
         }
     }
 }

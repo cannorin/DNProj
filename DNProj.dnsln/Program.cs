@@ -24,7 +24,7 @@ namespace DNProj.Sln
     {
         public static void Main(string[] args)
         {
-            new SolutionCommand().Run(args);
+            Tools.CallAsMain<SolutionCommand>(args);
         }
     }
 }

@@ -1,0 +1,14 @@
+#compdef dnsln
+
+_dnsln() {
+    local context state linex
+    if [[ -n $words[-1] ]]; then
+        local lines=$(dnsln --generate-suggestions-incomplete "${words[@]:1}")
+    else
+        local lines=$(dnsln --generate-suggestions "${words[@]:1}")
+    fi
+    for cmd in $lines; do
+        eval $cmd;
+    done
+    return 0
+}

@@ -51,6 +51,7 @@ install: binary
 	echo "mono $(REAL_PREFIX)/lib/dnproj/dnsln.exe \$$*" >> $(REAL_PREFIX)/bin/dnsln
 	chmod +x $(REAL_PREFIX)/bin/dnsln
 	$(REAL_PREFIX)/bin/dnproj --generate-man "$(REAL_PREFIX)"
+	$(REAL_PREFIX)/bin/dnsln  --generate-man "$(REAL_PREFIX)"
 	@for i in $(REAL_PREFIX)/lib/dnproj/*.dll; do mono --aot $$i; done
 	@for i in $(REAL_PREFIX)/lib/dnproj/*.exe; do mono --aot $$i; done
 
