@@ -57,6 +57,18 @@ namespace DNProj
                         case "-d":
                         case "--project-dir":
                             return CommandSuggestion.Directories();
+                        case "-t":
+                        case "--template":
+                            return CommandSuggestion.Values("none", "csharp", "fsharp");
+                        case "-o":
+                        case "--output-type":
+                            return CommandSuggestion.Values("library", "exe", "winexe", "module");
+                        case "-p":
+                        case "--platform":
+                            return CommandSuggestion.Values("AnyCPU", "x86", "x64");
+                        case "-f":
+                        case "--target-framework":
+                            return CommandSuggestion.Values("v2.0", "v3.0", "v3.5", "v4.0", "v4.5", "v4.5.1", "v4.5.2", "v4.6"); 
                         default:
                             return CommandSuggestion.None;
                     }

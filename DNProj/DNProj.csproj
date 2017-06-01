@@ -108,5 +108,6 @@
     <Compile Include="Solutions\NewSolutionCommand.cs" />
     <Compile Include="Solutions\Solution.cs" />
     <Compile Include="Solutions\AddProjSolutionCommand.cs" />
+    <Compile Include="Solutions\ListSolutionCommand.cs" />
   </ItemGroup>
 </Project>
