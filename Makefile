@@ -45,10 +45,10 @@ install: binary
 	mkdir -p $(REAL_PREFIX)/lib/dnproj $(REAL_PREFIX)/bin
 	cp bin/Release/* $(REAL_PREFIX)/lib/dnproj/
 	echo "#!/bin/sh" > $(REAL_PREFIX)/bin/dnproj
-	echo "mono $(REAL_PREFIX)/lib/dnproj/dnproj.exe \$$*" >> $(REAL_PREFIX)/bin/dnproj
+	echo "mono $(REAL_PREFIX)/lib/dnproj/dnproj.exe \"\$$@\"" >> $(REAL_PREFIX)/bin/dnproj
 	chmod +x $(REAL_PREFIX)/bin/dnproj
 	echo "#!/bin/sh" > $(REAL_PREFIX)/bin/dnsln
-	echo "mono $(REAL_PREFIX)/lib/dnproj/dnsln.exe \$$*" >> $(REAL_PREFIX)/bin/dnsln
+	echo "mono $(REAL_PREFIX)/lib/dnproj/dnsln.exe \"\$$@\"" >> $(REAL_PREFIX)/bin/dnsln
 	chmod +x $(REAL_PREFIX)/bin/dnsln
 	$(REAL_PREFIX)/bin/dnproj --generate-man "$(REAL_PREFIX)"
 	$(REAL_PREFIX)/bin/dnsln  --generate-man "$(REAL_PREFIX)"

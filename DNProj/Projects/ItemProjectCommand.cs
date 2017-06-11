@@ -67,7 +67,7 @@ in most cases, you can use 'dnproj add', 'dnproj add-ref', 'dnproj rm', and 'dnp
                         );
                         printItemGroup(g, gIndex.Value);
                     } 
-                }, "dnproj item show", "show project itemigurations.", "show project itemigurations.", "[options]");
+                }, "show", "show project itemigurations.", "show project itemigurations.", "[options]");
 
             Commands["add"] = Child(
                 args =>
@@ -94,7 +94,7 @@ in most cases, you can use 'dnproj add', 'dnproj add-ref', 'dnproj rm', and 'dnp
                         }
                     printItemGroup(g, Groups(p).IndexOf(g));
                     p.Save(p.FullFileName);
-                }, "dnproj item add", @"add files to specified project.
+                }, "add", @"add files to specified project.
 use <filename:buildaction> to specify build action.
 
 build actions:
@@ -126,7 +126,7 @@ build actions:
                         printItemGroup(g, Groups(p).IndexOf(g));
                     }
                     p.Save(p.FullFileName);
-                }, "dnproj item set-condition", "set conditon to item.\ngiving empty <condition> will remove condition.", "set condition to item.", "<filename>", "<condition>", "[options]");
+                }, "set-condition", "set conditon to item.\ngiving empty <condition> will remove condition.", "set condition to item.", "<filename>", "<condition>", "[options]");
 
             Commands["set-hintpath"] = Child(
                 args =>
@@ -157,7 +157,7 @@ build actions:
                         printItemGroup(g, Groups(p).IndexOf(g));
                     }
                     p.Save(p.FullFileName);
-                }, "dnproj item set-hintpath", "set hint path to item.\ngiving empty <path> will remove hint path.", "set hint path to item.", "<filename>", "<path>", "[options]");
+                }, "set-hintpath", "set hint path to item.\ngiving empty <path> will remove hint path.", "set hint path to item.", "<filename>", "<path>", "[options]");
             
 
             Commands["rm"] = Child(
@@ -176,7 +176,7 @@ build actions:
                         );
                     printItemGroup(g, Groups(p).IndexOf(g));
                     p.Save(p.FullFileName);
-                }, "dnproj item rm", "remove item.", "remove item.", "<filename>+", "[options]");
+                }, "rm", "remove item.", "remove item.", "<filename>+", "[options]");
 
             Commands["add-group"] = Child(
                 args =>
@@ -187,7 +187,7 @@ build actions:
                     if (!string.IsNullOrEmpty(cond))
                         g.Condition = cond;
                     p.Save(p.FullFileName);
-                }, "dnproj item add-group", "add item group.", "add item group.", "[condition]", "[options]");
+                }, "add-group", "add item group.", "add item group.", "[condition]", "[options]");
 
             Commands["set-group-condition"] = Child(
                 args =>
@@ -208,7 +208,7 @@ build actions:
                         },
                         () => Report.Fatal("group index not specified.")
                     );
-                }, "dnproj set-group-condition", "set condition to specified group. -i option is required. \ngiving empty condition will remove condition.", "set condition to group.", "[condition]", "[options]");
+                }, "set-group-condition", "set condition to specified group. -i option is required. \ngiving empty condition will remove condition.", "set condition to group.", "[condition]", "[options]");
 
             Commands["rm-group"] = Child(
                 args =>
@@ -224,7 +224,7 @@ build actions:
                         },
                         () => Report.Fatal("group index not specified.")
                     );
-                }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
+                }, "rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
         }
 
         public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))

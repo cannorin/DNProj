@@ -217,6 +217,38 @@ namespace DNProj
             return false;
         }
 
+        public bool AddConfigurationToProject(string pl, SlnProjectBlock p)
+        {
+             var pcp = Global.Sections.AsEnumerable().Find(x => x.Name == "ProjectConfigurationPlatforms");
+            if(pcp.HasValue)
+            {
+                var pg = p.Guid.AsSlnStyle();
+                pcp .FilterOut(x => x.Items.Any(y => y.Key.StartsWith(pg + "." + pl)))
+                    .May(x => {
+                        var ns = pg + "." + pl + ".";
+                        x.Items.Add(ns + "ActiveCfg", pl);
+                        x.Items.Add(ns + "Build.0", pl);
+                    });
+                pcp.May(x => x.Items.Sort((a, b) => a.Key.CompareTo((b.Key))));
+                return true;
+            }
+            return false;
+  
+        }
+
+        public bool RemoveConfigurationFromProject(string s, SlnProjectBlock p)
+        {
+            var pcp = Global.Sections.AsEnumerable().Find(x => x.Name == "ProjectConfigurationPlatforms");
+            var pg = p.Guid.AsSlnStyle();
+            if (pcp.Check(x => x.Items.Any(y => y.Key.StartsWith(pg + "." + s))))
+            {
+                pcp.Value.Items.RemoveAll(x => x.Key.StartsWith(pg + "." + s));
+                return true;
+            }
+            return false;
+
+        }
+
         public bool AddConfigurationPlatform(string s)
         {
             var scp = Global.Sections.AsEnumerable().Find(x => x.Name == "SolutionConfigurationPlatforms");
@@ -230,7 +262,7 @@ namespace DNProj
             {
                 foreach(var pg in Projects.Map(x => x.Guid.AsSlnStyle()))
                     pcp .FilterOut(x => 
-                         x.Items.All(y => !y.Key.StartsWith(pg))
+                            x.Items.All(y => !y.Key.StartsWith(pg))
                          || x.Items.Any(y => y.Key.StartsWith(pg + "." + s))
                         )
                         .May(x => {

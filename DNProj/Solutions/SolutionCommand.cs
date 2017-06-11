@@ -37,6 +37,7 @@ namespace DNProj
             Commands["new"] = new NewSolutionCommand();
             Commands["add-proj"] = new AddProjSolutionCommand();
             Commands["ls"] = new ListSolutionCommand();
+            Commands["buildconf"] = new BuildConfSolutionCommand();
             Commands["version"] = Child(_ =>
                 {
                     Console.WriteLine("dnsln version {0}\ncopyright (c) cannorin 2016", Tools.Version);

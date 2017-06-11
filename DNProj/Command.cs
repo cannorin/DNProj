@@ -147,7 +147,7 @@ namespace DNProj
 
         protected Command Child(Action<IEnumerable<string>> f, string name, string desc, string sdesc, params string[] args)
         {
-            return new ChildCommand(this, f, name, desc, sdesc, args);
+            return new ChildCommand(this, f, this.Name + " " + name, desc, sdesc, args);
         }
     }
 

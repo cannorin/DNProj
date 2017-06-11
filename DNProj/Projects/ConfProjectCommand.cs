@@ -64,7 +64,7 @@ $ dnproj conf rm-group -i 2"
                         );
                         printPropertyGroup(g, gIndex.Value);
                     } 
-                }, "dnproj conf show", "show project configurations.", "show project configurations.", "[options]");
+                }, "show", "show project configurations.", "show project configurations.", "[options]");
 
             Commands["set"] = Child(
                 args =>
@@ -86,7 +86,7 @@ $ dnproj conf rm-group -i 2"
                     }
                     printPropertyGroup(g, Groups(p).IndexOf(g));
                     p.Save(p.FullFileName);
-                }, "dnproj conf set", "add or change property value.\ngiving empty <value> will set empty value.", "add or change property value.", "<name>", "<value>", "[options]");
+                }, "set", "add or change property value.\ngiving empty <value> will set empty value.", "add or change property value.", "<name>", "<value>", "[options]");
 
             Commands["set-condition"] = Child(
                 args =>
@@ -111,7 +111,7 @@ $ dnproj conf rm-group -i 2"
                         printPropertyGroup(g, Groups(p).IndexOf(g));
                     }
                     p.Save(p.FullFileName);
-                }, "dnproj conf set-condition", "set conditon to property.\ngiving empty <condition> will remove condition.", "set condition to property.", "<name>", "<condition>", "[options]");
+                }, "set-condition", "set conditon to property.\ngiving empty <condition> will remove condition.", "set condition to property.", "<name>", "<condition>", "[options]");
 
             Commands["rm"] = Child(
                 args =>
@@ -129,7 +129,7 @@ $ dnproj conf rm-group -i 2"
                     }
                     printPropertyGroup(g, Groups(p).IndexOf(g));
                     p.Save(p.FullFileName);
-                }, "dnproj conf rm", "remove property.", "remove property.", "<name>+", "[options]");
+                }, "rm", "remove property.", "remove property.", "<name>+", "[options]");
 
             Commands["add-group"] = Child(
                 args =>
@@ -140,7 +140,7 @@ $ dnproj conf rm-group -i 2"
                     if (!string.IsNullOrEmpty(cond))
                         g.Condition = cond;
                     p.Save(p.FullFileName);
-                }, "dnproj conf add-group", "add property group.", "add property group.", "[condition]", "[options]");
+                }, "add-group", "add property group.", "add property group.", "[condition]", "[options]");
 
             Commands["set-group-condition"] = Child(
                 args =>
@@ -161,7 +161,7 @@ $ dnproj conf rm-group -i 2"
                         },
                         () => Report.Fatal("group index not specified.")
                     );
-                }, "dnproj set-group-condition", "set condition to specified group. -i option is required. \ngiving empty condition will remove condition.", "set condition to group.", "[condition]", "[options]");
+                }, "set-group-condition", "set condition to specified group. -i option is required. \ngiving empty condition will remove condition.", "set condition to group.", "[condition]", "[options]");
 
             Commands["rm-group"] = Child(
                 args =>
@@ -178,7 +178,7 @@ $ dnproj conf rm-group -i 2"
                         },
                         () => Report.Fatal("group index not specified.")
                     );
-                }, "dnproj rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
+                }, "rm-group", "remove specified group. -i option is required.", "set condition to group.", "[options]");
         }
 
         public override IEnumerable<CommandSuggestion> GetSuggestions(IEnumerable<string> args, Option<string> incompleteInput = default(Option<string>))
