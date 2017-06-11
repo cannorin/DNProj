@@ -7,7 +7,7 @@ Manage your .\*proj and .sln with commandline.
 
 # dnproj
 
-Use ``` dnproj ``` to edit your MSBuild/XBuild projects (\*proj files).
+Use ``` dnproj ``` to edit your MSBuild/XBuild projects (.\*proj files).
 
 For example:
 
@@ -23,11 +23,36 @@ to add existing .cs file to your project.
 
 to add a reference to your project.
 
-Then...
+then...
 
 ``` xbuild ```
 
 to build your project.
+
+# dnsln
+
+Use ``` dnsln ``` to edit your MSBuild/XBuild solutions (.sln files).
+
+For example:
+
+
+```dnsln new ConsoleApplication1 -t csharp```
+
+to create a new solution with a new project with "Hello, World!" template.
+
+```dnsln add-proj Library1.csproj```
+
+to add an existing project to your solution.
+
+```dnsln buildconf add Debug\|x64```
+
+to add 'Debug|x64' configuration to your solution.
+
+then...
+
+``` xbuild ```
+
+to build your solution.
 
 # dnproj NuGet integration
 
@@ -41,67 +66,9 @@ You can easily install, update, remove, and restore NuGet packages.
 
 ``` dnproj nuget restore ```
 
-Also, you can perform a quick search on the NuGet repository.
+If you want to restore NuGet packages in a solution, please use the original nuget command.
 
 ```
-$ dnproj nuget search "Reactive Extensions"
-Search result for 'Reactive Extensions' from https://packages.nuget.org/api/v2.
-
-------------
-
-* System.Threading.Tasks.Extensions
-  Ver.4.3.0 / 3743690 Downloads
-  Description:
-    Provides additional types that simplify the work of writing concurrent and asynchronous code.
-
-    Commonly Used Types:
-    System.Threading.Tasks.ValueTask<TResult>
-  Url: https://dot.net/
-  Tags:
-  This package requires license acceptance.
-  License url: http://go.microsoft.com/fwlink/?LinkId=329770
-
-------------
-
-* My useful extensions pack
-  Ver.1.0.5 / 2047 Downloads
-  Description:
-    Extensions, sorted by namespaces
-  Url:
-  Tags: c# extensions .net
-
-------------
-
-* System.Reflection.Extensions
-  Ver.4.3.0 / 7509987 Downloads
-  Description:
-    Provides custom attribute extension methods for System.Reflection types.
-
-    Commonly Used Types:
-    System.Reflection.InterfaceMapping
-    System.Reflection.CustomAttributeExtensions
-    System.Reflection.RuntimeReflectionExtensions
-
-    When using NuGet 3.x this package requires at least version 3.4.
-  Url: https://dot.net/
-  Tags:
-  This package requires license acceptance.
-  License url: http://go.microsoft.com/fwlink/?LinkId=329770
-
-...
-```
-
-# dnsln
-
-work in progress.
-
-concepts:
-
-``` dnsln new ConsoleApplication1.sln ```
-
-``` dnsln add-proj ConsoleApplication1.csproj ```
-
-``` dnsln add SomeSolutionItem.txt ```
 
 # build and install
 
@@ -118,9 +85,9 @@ PREFIX=/path/to/your/destination make install
 
 ## how to install
 
-Copy ```misc/zsh-completion/_dnproj``` to your ```$FPATH```.
+Copy ```misc/zsh-completion/*``` to your ```$FPATH```.
 
-Make sure ```dnproj``` is in your ```$PATH``` before use.
+Make sure ```dnproj``` and ```dnsln``` are in your ```$PATH``` before use.
 
 ## autocomplete NuGet package names
 
