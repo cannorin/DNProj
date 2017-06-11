@@ -68,8 +68,6 @@ You can easily install, update, remove, and restore NuGet packages.
 
 If you want to restore NuGet packages in a solution, please use the original nuget command.
 
-```
-
 # build and install
 
 DNProj itself requires Mono 3.x or later. 
