@@ -183,7 +183,7 @@ namespace DNProj
                     pm.SkipPackageTargetCheck = true;
                     pm.CheckDowngrade = true;
                     pm.Logger.IsSilent = !verbose;
-                    pm.PackageInstalled += (sender, e) =>
+                    EventHandler<DNPackageOperationEventArgs> onInstalled = (sender, e) =>
                     {
                         var pn = e.Package.GetFullName().Replace(' ', '.');
                         var bp = new Uri(proj.FullFileName);
@@ -210,11 +210,15 @@ namespace DNProj
                                 var absp = new Uri(Path.Combine(path, Path.Combine(pn, a.Path)));
                                 var rp = bp.MakeRelativeUri(absp).ToString();
                                 var an = Assembly.LoadFile(absp.AbsolutePath).GetName().Name;
-                                if (verbose)
-                                    Report.WriteLine(pm.Logger.Indents, "Adding reference to '{0}, HelpPath={1}'.", an, rp);
-                                var i = proj.ReferenceItemGroup().AddNewItem("Reference", an);
-                                i.SetMetadata("HintPath", rp);
-
+                                if (proj.ReferenceItemGroup().Cast<BuildItem>().Any(x => x.Include == an))
+                                    Report.Warning(pm.Logger.Indents, "The project already has a reference to '{0}'.", an);
+                                else
+                                {
+                                    if (verbose)
+                                        Report.WriteLine(pm.Logger.Indents, "Adding reference to '{0}, HelpPath={1}'.", an, rp);
+                                    var i = proj.ReferenceItemGroup().AddNewItem("Reference", an);
+                                    i.SetMetadata("HintPath", rp);
+                                }
                                 if(!verbose && fn == tgfn)
                                     Report.WriteLine(pm.Logger.Indents - 2, "* successfully installed '{0}'.", e.Package.GetFullName());
                                 else if(!verbose)
@@ -256,6 +260,7 @@ namespace DNProj
                                 }
                             });
                     };
+                    pm.PackageInstalled += onInstalled;
 
                     // install
                     foreach (var name in args)
@@ -268,7 +273,25 @@ namespace DNProj
                             id = name.Split(':')[0];
                         }
 
-                        var p = pm.InstallPackageWithValidation(fn, id, version, allowPre, force);
+                        Option<IPackage> p;
+                        if (version.Check(v => repo.Exists(id, SemanticVersion.Parse(v))) || repo.Exists (id))
+                        {
+                            Report.Warning(pm.Logger.Indents, "The package {0} is already installed.", id);
+                            p = version.Map(v => repo.FindPackage(id, SemanticVersion.Parse(v))).DefaultLazy(() => repo.FindPackage(id)).Some();
+                            var alt = p.Value.FindLowerCompatibleFramework(fn) 
+                                   || p.Value.GetSupportedFrameworks()
+                                             .Filter(x => x.IsPortableFramework())
+                                             .Map(x => new 
+                                             { 
+                                                 Framework = x, 
+                                                 Profile = NetPortableProfile.Parse(NetPortableProfileTable.Instance, x.Profile, true) 
+                                             })
+                                             .Find(x => NuGetTools.FindLowerCompatibleFramework(x.Profile.SupportedFrameworks, fn).HasValue)
+                                             .Map(x => x.Framework);
+                            onInstalled(this, new DNPackageOperationEventArgs(p.Value, null, path, alt));
+                        }
+                        else
+                            p = pm.InstallPackageWithValidation(fn, id, version, allowPre, force);
 
                         if(!p.HasValue)
                             Environment.Exit(1);

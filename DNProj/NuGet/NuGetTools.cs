@@ -101,7 +101,7 @@ namespace DNProj
 
             if (p == null)
             {
-                Report.Error(this.Logger.Indents, "package '{0}' doesn't exists.", id);
+                Report.Error(this.Logger.Indents, "package '{0}' doesn't exist.", id);
                 return Option.None;
             }
 
