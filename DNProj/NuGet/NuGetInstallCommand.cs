@@ -274,7 +274,7 @@ namespace DNProj
                         }
 
                         Option<IPackage> p;
-                        if (version.Check(v => repo.Exists(id, SemanticVersion.Parse(v))) || repo.Exists (id))
+                        if (version.Check(v => localrepo.Exists(id, SemanticVersion.Parse(v))) || localrepo.Exists (id))
                         {
                             Report.Warning(pm.Logger.Indents, "The package {0} is already installed.", id);
                             p = version.Map(v => repo.FindPackage(id, SemanticVersion.Parse(v))).DefaultLazy(() => repo.FindPackage(id)).Some();
@@ -337,7 +337,7 @@ namespace DNProj
             }
             catch (Exception e)
             {
-                Report.Fatal(e.Message);
+                Report.Fatal(e.ToString());
             }
         }
     }
