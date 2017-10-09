@@ -65,7 +65,7 @@ namespace DNProj
         {
             if (args.Count() == 0)
                 return CommandSuggestion.None;
-            else return new CommandSuggestion(New.Seq("_values", "'values'").Concat(mapQuote(args)).ToArray());
+            else return new CommandSuggestion(New.Seq("_values", "-w", "'values'").Concat(mapQuote(args)).ToArray());
         }
 
         public static CommandSuggestion Values(params string[] args)
@@ -157,7 +157,7 @@ namespace DNProj
             Option<string> incompleteInput = default(Option<string>)
         )
         {
-            var _rs = c.Options.Try(xs => xs.Parse(args));
+            var _rs = c.Options.Try(xs => xs.Parse(args.FilterOut(String.IsNullOrWhiteSpace)));
             if(_rs.HasException)
             {
                 if (incompleteOption != null)
